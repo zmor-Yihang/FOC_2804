@@ -28,7 +28,8 @@
             "bit": "c",
             "limits": "c",
             "new": "c",
-            "cstdlib": "c"
+            "cstdlib": "c",
+            "cmath": "c"
         },
         "[yaml]": {
             "editor.insertSpaces": true,
