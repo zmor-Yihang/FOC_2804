@@ -1,6 +1,6 @@
 #include "pid.h"
 
-void pid_init(pid_controller_t *pid, pid_mode_t mode, float kp, float ki, float kd, float out_min, float out_max, uint8_t enable_limit)
+void pid_init(pid_controller_t *pid, pid_mode_t mode, float kp, float ki, float kd, float out_min, float out_max, pid_limit_mode_t enable_limit)
 {
     pid->mode = mode;
     pid->kp = kp;
@@ -17,7 +17,7 @@ void pid_init(pid_controller_t *pid, pid_mode_t mode, float kp, float ki, float 
     pid->out = 0.0f;
     pid->out_min = out_min;
     pid->out_max = out_max;
-    pid->enable_limit = (enable_limit != 0U) ? 1U : 0U;
+    pid->enable_limit = enable_limit;
 
     // kt = ki，Microchip AN1078 笔记的取法
     pid->kt = ki;
@@ -41,9 +41,9 @@ void pid_set_output_limit(pid_controller_t *pid, float out_min, float out_max)
     pid->out_max = out_max;
 }
 
-void pid_set_limit_enable(pid_controller_t *pid, uint8_t enable_limit)
+void pid_set_limit_enable(pid_controller_t *pid, pid_limit_mode_t enable_limit)
 {
-    pid->enable_limit = (enable_limit != 0U) ? 1U : 0U;
+    pid->enable_limit = enable_limit;
 }
 
 void pid_set_integral_limit(pid_controller_t *pid, float integral_max)
@@ -93,7 +93,7 @@ float pid_calculate(pid_controller_t *pid, float setpoint, float feedback, float
     float out_unclamped = pid->p_term + pid->i_term + pid->d_term; // 未限幅的PID输出
 
     // 如果是电流环PI，直接输出未限幅的值，由外部负责限幅，因为电流环输出是电压，需要做矢量限幅
-    if (pid->enable_limit == 0U)
+    if (pid->enable_limit == PID_LIMIT_DISABLE)
     {
         pid->out = out_unclamped;
         pid->backcalc_error = 0.0f;

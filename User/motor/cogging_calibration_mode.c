@@ -1,5 +1,6 @@
 #include "cogging_calibration_mode.h"
 #include "../adv_alg/cogging_calibration.h"
+#include <stdio.h>
 
 // 齿槽标定模式专用 FOC 句柄
 static foc_t foc_cogging_calib_handle;
@@ -19,6 +20,11 @@ static float cogging_repeat_temp = 0.0f;
 static float cogging_table_raw_count_temp = 0.0f;
 static float cogging_table_iq_temp = 0.0f;
 static uint8_t cogging_final_table_printed = 0U;
+static uint8_t cogging_final_table_cached = 0U;
+static uint16_t cogging_final_table_size = 0U;
+static uint16_t cogging_final_raw_count_table[COGGING_CALIB_TABLE_SIZE];
+static float cogging_final_iq_table[COGGING_CALIB_TABLE_SIZE];
+static char cogging_final_print_buffer[10192U];
 
 /**
  * @brief 齿槽标定模式电流环回调
@@ -90,8 +96,8 @@ static void cogging_calibration_mode_callback(void)
 void coggingCalibrationMode_init(void)
 {
     // 初始化 d/q 轴电流环 PI 控制器
-    pid_init(&pid_id, PID_MODE_PI, CURRENT_PID_KP, CURRENT_PID_KI, 0.0f, CURRENT_PID_OUT_MIN, CURRENT_PID_OUT_MAX, 0U);
-    pid_init(&pid_iq, PID_MODE_PI, CURRENT_PID_KP, CURRENT_PID_KI, 0.0f, CURRENT_PID_OUT_MIN, CURRENT_PID_OUT_MAX, 0U);
+    pid_init(&pid_id, PID_MODE_PI, CURRENT_PID_KP, CURRENT_PID_KI, 0.0f, CURRENT_PID_OUT_MIN, CURRENT_PID_OUT_MAX, PID_LIMIT_DISABLE);
+    pid_init(&pid_iq, PID_MODE_PI, CURRENT_PID_KP, CURRENT_PID_KI, 0.0f, CURRENT_PID_OUT_MIN, CURRENT_PID_OUT_MAX, PID_LIMIT_DISABLE);
 
     // 初始化 FOC 控制句柄，标定模式只需要电流环
     foc_init(&foc_cogging_calib_handle, &pid_id, &pid_iq, NULL);
@@ -107,6 +113,10 @@ void coggingCalibrationMode_init(void)
         ;
     encoder_reset_mechanicalPosition(0.0f);
     coggingCalib_init(&cogging_calib_handle, start_mech_angle);
+    cogging_final_table_printed = 0U;
+    cogging_final_table_cached = 0U;
+    cogging_final_table_size = 0U;
+    cogging_final_print_buffer[0] = '\0';
 
     // 注册电流环回调，进入标定运行
     adc_register_injectedCallback(cogging_calibration_mode_callback);
@@ -125,61 +135,115 @@ void coggingCalibrationMode_init(void)
  */
 void coggingCalibrationModeDebug_print_info(void)
 {
-    static int last_index = -1;
-    int current_index = (int)cogging_index_temp;
-
-    if ((coggingCalib_isFinished(&cogging_calib_handle) != 0U) && (cogging_final_table_printed == 0U))
+    if (coggingCalib_isFinished(&cogging_calib_handle) == 0U)
     {
-        uint16_t idx;
-        uint16_t table_size = coggingCalib_getTableSize();
-
-        cogging_final_table_printed = 1U;
-        printf("#include \"cogging_comp_table.h\"\r\n\r\n");
-        printf("const uint16_t g_cogging_comp_raw_count_table[COGGING_COMP_TABLE_SIZE] = {\r\n");
-        for (idx = 0U; idx < table_size; idx++)
-        {
-            printf("    %u%s",
-                   (unsigned int)coggingCalib_getRawCountByIndex(&cogging_calib_handle, idx),
-                   ((idx + 1U) < table_size) ? "," : "");
-
-            if (((idx + 1U) % 16U) == 0U || ((idx + 1U) == table_size))
-            {
-                printf("\r\n");
-            }
-            else
-            {
-                printf(" ");
-            }
-        }
-        printf("};\r\n\r\n");
-
-        printf("const float g_cogging_comp_iq_table[COGGING_COMP_TABLE_SIZE] = {\r\n");
-        for (idx = 0U; idx < table_size; idx++)
-        {
-            printf("    %.6ff%s",
-                   (double)coggingCalib_getIqCompByIndex(&cogging_calib_handle, idx),
-                   ((idx + 1U) < table_size) ? "," : "");
-
-            if (((idx + 1U) % 8U) == 0U || ((idx + 1U) == table_size))
-            {
-                printf("\r\n");
-            }
-            else
-            {
-                printf(" ");
-            }
-        }
-        printf("};\r\n");
         return;
     }
 
-    if (current_index != last_index)
+    if (cogging_final_table_cached == 0U)
     {
-        last_index = current_index;
-        printf("Index: %d, Repeat: %d, Raw Count: %d, Comp IQ: %.3f A\r\n",
-               current_index,
-               (int)cogging_repeat_temp,
-               (int)cogging_table_raw_count_temp,
-               cogging_table_iq_temp);
+        uint16_t idx;
+
+        cogging_final_table_size = coggingCalib_getTableSize();
+        if (cogging_final_table_size > COGGING_CALIB_TABLE_SIZE)
+        {
+            cogging_final_table_size = COGGING_CALIB_TABLE_SIZE;
+        }
+
+        for (idx = 0U; idx < cogging_final_table_size; ++idx)
+        {
+            cogging_final_raw_count_table[idx] = coggingCalib_getRawCountByIndex(&cogging_calib_handle, idx);
+            cogging_final_iq_table[idx] = coggingCalib_getIqCompByIndex(&cogging_calib_handle, idx);
+        }
+
+        cogging_final_table_cached = 1U;
+    }
+
+    if (cogging_final_table_printed == 0U)
+    {
+        uint16_t idx;
+        int print_len = 0;
+        int written;
+
+#define COGGING_FINAL_APPEND(...)                                                                                 \
+        do                                                                                                        \
+        {                                                                                                         \
+            written = snprintf(&cogging_final_print_buffer[print_len],                                            \
+                               sizeof(cogging_final_print_buffer) - (size_t)print_len,                            \
+                               __VA_ARGS__);                                                                      \
+            if (written < 0)                                                                                      \
+            {                                                                                                     \
+                return;                                                                                          \
+            }                                                                                                     \
+            if ((size_t)written >= (sizeof(cogging_final_print_buffer) - (size_t)print_len))                      \
+            {                                                                                                     \
+                print_len = (int)sizeof(cogging_final_print_buffer) - 1;                                          \
+            }                                                                                                     \
+            else                                                                                                  \
+            {                                                                                                     \
+                print_len += written;                                                                             \
+            }                                                                                                     \
+        } while (0)
+
+        COGGING_FINAL_APPEND("/* COGGING_TABLE_BEGIN raw_count=%u iq_count=%u */\r\n",
+                             (unsigned int)cogging_final_table_size,
+                             (unsigned int)cogging_final_table_size);
+        COGGING_FINAL_APPEND("#include \"cogging_comp_table.h\"\r\n\r\n");
+        COGGING_FINAL_APPEND("const uint16_t g_cogging_comp_raw_count_table[COGGING_COMP_TABLE_SIZE] = {\r\n");
+
+        for (idx = 0U; idx < cogging_final_table_size; ++idx)
+        {
+            if ((idx % 16U) == 0U)
+            {
+                COGGING_FINAL_APPEND("    ");
+            }
+
+            COGGING_FINAL_APPEND("%u%s",
+                                 (unsigned int)cogging_final_raw_count_table[idx],
+                                 (idx + 1U) < cogging_final_table_size ? "," : "");
+
+            if ((((idx + 1U) % 16U) == 0U) || ((idx + 1U) >= cogging_final_table_size))
+            {
+                COGGING_FINAL_APPEND("\r\n");
+            }
+            else
+            {
+                COGGING_FINAL_APPEND(" ");
+            }
+        }
+
+        COGGING_FINAL_APPEND("};\r\n\r\n");
+        COGGING_FINAL_APPEND("const float g_cogging_comp_iq_table[COGGING_COMP_TABLE_SIZE] = {\r\n");
+
+        for (idx = 0U; idx < cogging_final_table_size; ++idx)
+        {
+            if ((idx % 8U) == 0U)
+            {
+                COGGING_FINAL_APPEND("    ");
+            }
+
+            COGGING_FINAL_APPEND("%.6ff%s",
+                                 (double)cogging_final_iq_table[idx],
+                                 (idx + 1U) < cogging_final_table_size ? "," : "");
+
+            if ((((idx + 1U) % 8U) == 0U) || ((idx + 1U) >= cogging_final_table_size))
+            {
+                COGGING_FINAL_APPEND("\r\n");
+            }
+            else
+            {
+                COGGING_FINAL_APPEND(" ");
+            }
+        }
+
+        COGGING_FINAL_APPEND("};\r\n");
+        COGGING_FINAL_APPEND("/* COGGING_TABLE_END raw_count=%u iq_count=%u */\r\n",
+                             (unsigned int)cogging_final_table_size,
+                             (unsigned int)cogging_final_table_size);
+
+#undef COGGING_FINAL_APPEND
+
+        cogging_final_table_printed = 1U;
+        usart_send_data((uint8_t *)cogging_final_print_buffer, (uint16_t)print_len);
     }
 }

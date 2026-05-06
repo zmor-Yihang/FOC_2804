@@ -23,7 +23,7 @@ void fluxWeaken_init(flux_weak_t *flux_weak, float u_dc, float u_ref_ratio, floa
     flux_weak->u_ref_ratio = u_ref_ratio;
 
     /* 复用 pid_controller_t 存储弱磁参数与限幅范围 */
-    pid_init(&flux_weak->pid, PID_MODE_PI, kp, ki, 0.0f, id_min, 0.0f, 1U);
+    pid_init(&flux_weak->pid, PID_MODE_PI, kp, ki, 0.0f, id_min, 0.0f, PID_LIMIT_ENABLE);
 
     flux_weak->u_current_filtered = 0.0f;
     flux_weak->voltage_filter_const = FLUX_WEAK_VOLTAGE_FILTER_CONST;

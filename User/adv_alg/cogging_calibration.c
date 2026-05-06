@@ -1,5 +1,83 @@
 #include "cogging_calibration.h"
 
+static uint16_t coggingCalib_rawCountToIndex(uint16_t raw_count)
+{
+    uint32_t index = ((uint32_t)raw_count * (uint32_t)COGGING_CALIB_TABLE_SIZE) / 4096UL;
+
+    if (index >= (uint32_t)COGGING_CALIB_TABLE_SIZE)
+    {
+        index = (uint32_t)COGGING_CALIB_TABLE_SIZE - 1UL;
+    }
+
+    return (uint16_t)index;
+}
+
+static uint16_t coggingCalib_indexToRawCount(uint16_t index)
+{
+    return (uint16_t)(((uint32_t)index * 4096UL) / (uint32_t)COGGING_CALIB_TABLE_SIZE);
+}
+
+static uint16_t coggingCalib_nextValidIndex(cogging_calib_t *handle, uint16_t start_index)
+{
+    uint16_t offset;
+
+    for (offset = 1U; offset <= COGGING_CALIB_TABLE_SIZE; ++offset)
+    {
+        uint16_t idx = (uint16_t)((start_index + offset) % COGGING_CALIB_TABLE_SIZE);
+        if (handle->raw_count_accum[idx] > 0UL)
+        {
+            return idx;
+        }
+    }
+
+    return start_index;
+}
+
+static uint16_t coggingCalib_prevValidIndex(cogging_calib_t *handle, uint16_t start_index)
+{
+    uint16_t offset;
+
+    for (offset = 1U; offset <= COGGING_CALIB_TABLE_SIZE; ++offset)
+    {
+        uint16_t idx = (uint16_t)((start_index + COGGING_CALIB_TABLE_SIZE - offset) % COGGING_CALIB_TABLE_SIZE);
+        if (handle->raw_count_accum[idx] > 0UL)
+        {
+            return idx;
+        }
+    }
+
+    return start_index;
+}
+
+static float coggingCalib_interpMissingIq(cogging_calib_t *handle, uint16_t index)
+{
+    uint16_t prev_idx = coggingCalib_prevValidIndex(handle, index);
+    uint16_t next_idx = coggingCalib_nextValidIndex(handle, index);
+    uint16_t dist_prev;
+    uint16_t dist_next;
+    float ratio;
+    float prev_iq;
+    float next_iq;
+
+    if ((handle->raw_count_accum[prev_idx] == 0UL) || (handle->raw_count_accum[next_idx] == 0UL))
+    {
+        return 0.0f;
+    }
+
+    if (prev_idx == next_idx)
+    {
+        return handle->iq_comp_accum[prev_idx] / (float)handle->raw_count_accum[prev_idx];
+    }
+
+    dist_prev = (uint16_t)((index + COGGING_CALIB_TABLE_SIZE - prev_idx) % COGGING_CALIB_TABLE_SIZE);
+    dist_next = (uint16_t)((next_idx + COGGING_CALIB_TABLE_SIZE - prev_idx) % COGGING_CALIB_TABLE_SIZE);
+    ratio = (dist_next > 0U) ? ((float)dist_prev / (float)dist_next) : 0.0f;
+    prev_iq = handle->iq_comp_accum[prev_idx] / (float)handle->raw_count_accum[prev_idx];
+    next_iq = handle->iq_comp_accum[next_idx] / (float)handle->raw_count_accum[next_idx];
+
+    return prev_iq + (next_iq - prev_iq) * ratio;
+}
+
 /**
  * @brief 初始化齿槽转矩标定器
  * @param handle            齿槽标定句柄
@@ -33,7 +111,7 @@ void coggingCalib_init(cogging_calib_t *handle, float start_angle_rad)
              COGGING_CALIB_POSITION_KD,
              COGGING_CALIB_POSITION_OUT_MIN,
              COGGING_CALIB_POSITION_OUT_MAX,
-             0U);
+             PID_LIMIT_DISABLE);
 }
 
 /**
@@ -112,9 +190,12 @@ uint8_t coggingCalib_update(cogging_calib_t *handle, float mech_angle_rad, uint1
     {
         if (handle->tick_count >= COGGING_CALIB_SAMPLE_TICKS)
         {
-            // 记录该采样点：机械角度 + 维持该角度所需的 iq
-            handle->raw_count_accum[handle->index] += raw_count;
-            handle->iq_comp_accum[handle->index] += measured_iq;
+            // 记录该采样点：按编码器单圈 raw 直接映射到固定补偿表索引
+            {
+                uint16_t sample_idx = coggingCalib_rawCountToIndex(raw_count);
+                handle->raw_count_accum[sample_idx] += 1UL;
+                handle->iq_comp_accum[sample_idx] += measured_iq;
+            }
             handle->index++;
             handle->tick_count = 0U;
 
@@ -127,11 +208,20 @@ uint8_t coggingCalib_update(cogging_calib_t *handle, float mech_angle_rad, uint1
                     uint16_t table_idx;
                     float iq_mean = 0.0f;
 
-                    // 所有圈次采样完成，计算每个点的平均值并生成最终补偿表
+                    // 固定索引补偿表：每个 index 对应固定 raw 网格，缺失 bin 用相邻有效 bin 环形插值补齐
                     for (table_idx = 0U; table_idx < COGGING_CALIB_TABLE_SIZE; table_idx++)
                     {
-                        handle->raw_count_table[table_idx] = (uint16_t)(handle->raw_count_accum[table_idx] / (uint32_t)COGGING_CALIB_REPEAT_COUNT);
-                        handle->iq_comp_table[table_idx] = handle->iq_comp_accum[table_idx] / (float)COGGING_CALIB_REPEAT_COUNT;
+                        handle->raw_count_table[table_idx] = coggingCalib_indexToRawCount(table_idx);
+
+                        if (handle->raw_count_accum[table_idx] > 0UL)
+                        {
+                            handle->iq_comp_table[table_idx] = handle->iq_comp_accum[table_idx] / (float)handle->raw_count_accum[table_idx];
+                        }
+                        else
+                        {
+                            handle->iq_comp_table[table_idx] = coggingCalib_interpMissingIq(handle, table_idx);
+                        }
+
                         iq_mean += handle->iq_comp_table[table_idx];
                     }
 
@@ -199,8 +289,11 @@ void coggingCalib_getDebugData(cogging_calib_t *handle, float *data, uint16_t *l
         }
         else
         {
-            data[4] = (float)(handle->raw_count_accum[handle->index - 1U] / (uint32_t)(handle->repeat_count + 1U));
-            data[5] = handle->iq_comp_accum[handle->index - 1U] / (float)(handle->repeat_count + 1U);
+            uint16_t debug_idx = coggingCalib_rawCountToIndex((uint16_t)(((uint32_t)(handle->index - 1U) * 4096UL) / (uint32_t)COGGING_CALIB_TABLE_SIZE));
+            data[4] = (float)coggingCalib_indexToRawCount(debug_idx);
+            data[5] = (handle->raw_count_accum[debug_idx] > 0UL) ?
+                          (handle->iq_comp_accum[debug_idx] / (float)handle->raw_count_accum[debug_idx]) :
+                          0.0f;
         }
     }
     else

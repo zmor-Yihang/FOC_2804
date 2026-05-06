@@ -47,7 +47,7 @@ static void position_closed_callback(void)
     // Park 变换
     dq_t i_dq = park_transform(i_alphabeta, angle_el);
 
-    // 位置闭环：位置PD直接输出iq目标，电流环输出电压
+    // 位置闭环：位置PID直接输出iq目标，电流环输出电压
     loopControl_run_positionLoop(&foc_position_closed_handle, i_dq, angle_el, speed_feedback, position_feedback, FOC_POSITION_LOOP_DIVIDER);
 
     // 保存调试打印数据
@@ -73,11 +73,11 @@ static void position_closed_callback(void)
 
 void positionClosed_init(float position_rad)
 {
-    // 初始化电流环和位置环 PID 控制器，位置环使用PD模式并直接输出iq目标
-    pid_init(&pid_id, PID_MODE_PI, CURRENT_PID_KP, CURRENT_PID_KI, 0.0f, CURRENT_PID_OUT_MIN, CURRENT_PID_OUT_MAX, 0U);
-    pid_init(&pid_iq, PID_MODE_PI, CURRENT_PID_KP, CURRENT_PID_KI, 0.0f, CURRENT_PID_OUT_MIN, CURRENT_PID_OUT_MAX, 0U);
-    pid_init(&pid_speed, PID_MODE_PI, SPEED_PID_KP, SPEED_PID_KI, 0.0f, SPEED_PID_OUT_MIN, SPEED_PID_OUT_MAX, 1U);
-    pid_init(&pid_position, PID_MODE_PD, POSITION_PID_KP, 0.0f, POSITION_PID_KD, POSITION_PID_OUT_MIN, POSITION_PID_OUT_MAX, 1U);
+    // 初始化电流环和位置环 PID 控制器，位置环使用PID模式并直接输出iq目标
+    pid_init(&pid_id, PID_MODE_PI, CURRENT_PID_KP, CURRENT_PID_KI, 0.0f, CURRENT_PID_OUT_MIN, CURRENT_PID_OUT_MAX, PID_LIMIT_DISABLE);
+    pid_init(&pid_iq, PID_MODE_PI, CURRENT_PID_KP, CURRENT_PID_KI, 0.0f, CURRENT_PID_OUT_MIN, CURRENT_PID_OUT_MAX, PID_LIMIT_DISABLE);
+    pid_init(&pid_speed, PID_MODE_PI, SPEED_PID_KP, SPEED_PID_KI, 0.0f, SPEED_PID_OUT_MIN, SPEED_PID_OUT_MAX, PID_LIMIT_ENABLE);
+    pid_init(&pid_position, PID_MODE_PID, POSITION_PID_KP, POSITION_PID_KI, POSITION_PID_KD, POSITION_PID_OUT_MIN, POSITION_PID_OUT_MAX, PID_LIMIT_ENABLE);
 
     // 初始化 FOC 控制句柄
     foc_init(&foc_position_closed_handle, &pid_id, &pid_iq, &pid_speed);

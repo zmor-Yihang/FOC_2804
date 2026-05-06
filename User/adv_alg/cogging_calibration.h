@@ -8,11 +8,12 @@
 #include "../utils/angle_utils.h"
 #include "../utils/math_utils.h"
 
-#define COGGING_CALIB_TABLE_SIZE            128U   // 单圈补偿表采样点数
+#define COGGING_CALIB_TABLE_SIZE            512U   // 单圈补偿表采样点数
 #define COGGING_CALIB_SETTLE_TICKS          200U   // 每个采样点到位后的稳定等待拍数
 #define COGGING_CALIB_SAMPLE_TICKS          200U   // 稳定后进入采样状态时，额外保持的采样拍数
-#define COGGING_CALIB_REPEAT_COUNT          10U    // 整张单圈补偿表重复采样次数，最终按圈求平均
+#define COGGING_CALIB_REPEAT_COUNT          5U    // 整张单圈补偿表重复采样次数，最终按圈求平均
 #define COGGING_CALIB_MAX_MECH_SPEED_RPM    5.0f   // 允许记录数据时的最大机械转速，超过认为尚未稳定
+#define COGGING_CALIB_MAX_ANGLE_ERROR_RAD   0.010f // 允许记录数据时的最大机械角误差(rad)，约0.57度
 #define COGGING_CALIB_POSITION_KP           0.8f   // 标定用位置 PD 的比例系数
 #define COGGING_CALIB_POSITION_KD           0.02f  // 标定用位置 PD 的微分系数
 #define COGGING_CALIB_POSITION_OUT_MIN      (-0.8f) // 标定用 q 轴目标电流下限(A)
@@ -37,10 +38,13 @@ typedef struct
     float start_angle_rad;                            // 标定起始机械角(rad)
     float target_angle_rad;                           // 当前正在逼近/保持的目标机械角(rad)
     float target_iq;                                  // 当前输出给电流环的目标 q 轴电流(A)
+    uint32_t sample_raw_count_accum;                  // 当前采样窗口内的编码器原始计数累加值
+    float sample_iq_accum;                            // 当前采样窗口内的 q 轴电流累加值(A)
+    uint16_t sample_count;                            // 当前采样窗口内的有效采样次数
     uint16_t raw_count_table[COGGING_CALIB_TABLE_SIZE]; // 补偿表的编码器原始计数点(0~4095)
     float iq_comp_table[COGGING_CALIB_TABLE_SIZE];    // 对应机械角下测得的补偿 iq(A)
-    uint32_t raw_count_accum[COGGING_CALIB_TABLE_SIZE]; // 多圈重复采样的编码器计数累加值
-    float iq_comp_accum[COGGING_CALIB_TABLE_SIZE];    // 多圈重复采样的补偿 iq 累加值(A)
+    uint32_t raw_count_accum[COGGING_CALIB_TABLE_SIZE]; // 固定 raw 索引 bin 的有效采样次数
+    float iq_comp_accum[COGGING_CALIB_TABLE_SIZE];    // 固定 raw 索引 bin 的补偿 iq 累加值(A)
     cogging_calib_state_t state;                      // 当前标定状态机状态
     pid_controller_t position_pd;                     // 标定内部使用的位置 PD 控制器
 } cogging_calib_t;

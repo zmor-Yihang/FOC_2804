@@ -3,8 +3,11 @@
 
 static float speed_closed_get_cogging_comp_iq(uint16_t raw_count)
 {
-    const uint16_t *raw_table = g_cogging_comp_raw_count_table;
     const float *iq_table = g_cogging_comp_iq_table;
+    uint32_t scaled_pos;
+    uint16_t idx_l;
+    uint16_t idx_r;
+    float ratio;
 
     if (COGGING_COMP_TABLE_SIZE == 0U)
     {
@@ -16,40 +19,21 @@ static float speed_closed_get_cogging_comp_iq(uint16_t raw_count)
         return iq_table[0];
     }
 
-    /* raw_table 必须按编码器原始线数从小到大排列；在相邻两点之间做线性插值 */
-    for (uint16_t i = 0U; i < (uint16_t)(COGGING_COMP_TABLE_SIZE - 1U); ++i)
+    scaled_pos = (uint32_t)raw_count * (uint32_t)COGGING_COMP_TABLE_SIZE;
+    idx_l = (uint16_t)(scaled_pos / (uint32_t)ENCODER_CPR);
+    if (idx_l >= COGGING_COMP_TABLE_SIZE)
     {
-        uint16_t raw_l = raw_table[i];
-        uint16_t raw_r = raw_table[i + 1U];
-
-        if ((raw_count >= raw_l) && (raw_count < raw_r))
-        {
-            float span = (float)(raw_r - raw_l);
-            float ratio = (span > 0.0f) ? ((float)(raw_count - raw_l) / span) : 0.0f;
-            return iq_table[i] + (iq_table[i + 1U] - iq_table[i]) * ratio;
-        }
+        idx_l = (uint16_t)(COGGING_COMP_TABLE_SIZE - 1U);
     }
 
-    /* 处理 0~4095 的环形边界：最后一点到第一点跨 ENCODER_CPR */
+    idx_r = (uint16_t)(idx_l + 1U);
+    if (idx_r >= COGGING_COMP_TABLE_SIZE)
     {
-        uint16_t raw_l = raw_table[COGGING_COMP_TABLE_SIZE - 1U];
-        uint16_t raw_r = (uint16_t)(raw_table[0] + ENCODER_CPR);
-
-        if ((raw_count >= raw_l) || (raw_count < raw_table[0]))
-        {
-            uint16_t raw_count_ext = raw_count;
-            if (raw_count_ext < raw_table[0])
-            {
-                raw_count_ext = (uint16_t)(raw_count_ext + ENCODER_CPR);
-            }
-
-            float span = (float)(raw_r - raw_l);
-            float ratio = (span > 0.0f) ? ((float)(raw_count_ext - raw_l) / span) : 0.0f;
-            return iq_table[COGGING_COMP_TABLE_SIZE - 1U] + (iq_table[0] - iq_table[COGGING_COMP_TABLE_SIZE - 1U]) * ratio;
-        }
+        idx_r = 0U;
     }
 
-    return 0.0f;
+    ratio = (float)(scaled_pos % (uint32_t)ENCODER_CPR) / (float)ENCODER_CPR;
+    return iq_table[idx_l] + (iq_table[idx_r] - iq_table[idx_l]) * ratio;
 }
 
 static foc_t foc_speed_closed_handle;
@@ -148,10 +132,10 @@ static void speed_closed_callback(void)
 void speedClosed_init(float speed_rpm)
 {
     // 初始化速度环 PID 控制器
-    pid_init(&pid_id, PID_MODE_PI, CURRENT_PID_KP, CURRENT_PID_KI, 0.0f, CURRENT_PID_OUT_MIN, CURRENT_PID_OUT_MAX, 0U);
-    pid_init(&pid_iq, PID_MODE_PI, CURRENT_PID_KP, CURRENT_PID_KI, 0.0f, CURRENT_PID_OUT_MIN, CURRENT_PID_OUT_MAX, 0U); // 按电流环带宽1000Hz整定
+    pid_init(&pid_id, PID_MODE_PI, CURRENT_PID_KP, CURRENT_PID_KI, 0.0f, CURRENT_PID_OUT_MIN, CURRENT_PID_OUT_MAX, PID_LIMIT_DISABLE);
+    pid_init(&pid_iq, PID_MODE_PI, CURRENT_PID_KP, CURRENT_PID_KI, 0.0f, CURRENT_PID_OUT_MIN, CURRENT_PID_OUT_MAX, PID_LIMIT_DISABLE); // 按电流环带宽1000Hz整定
 
-    pid_init(&pid_speed, PID_MODE_PI, SPEED_PID_KP, SPEED_PID_KI, 0.0f, SPEED_PID_OUT_MIN, SPEED_PID_OUT_MAX, 1U); // 按 δ = 16 整定的
+    pid_init(&pid_speed, PID_MODE_PI, SPEED_PID_KP, SPEED_PID_KI, 0.0f, SPEED_PID_OUT_MIN, SPEED_PID_OUT_MAX, PID_LIMIT_ENABLE); // 按 δ = 16 整定的
 
     // 初始化 FOC 控制句柄
     foc_init(&foc_speed_closed_handle, &pid_id, &pid_iq, &pid_speed);

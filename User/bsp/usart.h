@@ -9,10 +9,10 @@ extern UART_HandleTypeDef huart2;
 extern DMA_HandleTypeDef hdma_usart2_rx; /* 声明USART2接收DMA句柄 */
 extern DMA_HandleTypeDef hdma_usart2_tx; /* 声明USART2发送DMA句柄 */
 
-#define RX_BUF_TEMP_SIZE 512     /* DMA循环接收缓冲区大小 */
+#define RX_BUF_TEMP_SIZE 1024    /* DMA循环接收缓冲区大小 */
 #define FIFO_UART_TX_SIZE 2048   /* FIFO发送缓冲区大小 */
-#define TX_DMA_BUF_SIZE 1024     /* DMA发送临时缓冲区大小 */
-#define FIFO_UART_RX_SIZE 512    /* FIFO接收缓冲区大小 */
+#define TX_DMA_BUF_SIZE 2048     /* DMA发送临时缓冲区大小 */
+#define FIFO_UART_RX_SIZE 1024   /* FIFO接收缓冲区大小 */
 #define TX_DMA_TRIGGER_THRESH 32 /* DMA发送触发阈值*/
 
 void usart_init(void);

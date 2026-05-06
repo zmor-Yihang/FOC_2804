@@ -13,6 +13,12 @@ typedef enum
     PID_MODE_PID
 } pid_mode_t;
 
+typedef enum
+{
+    PID_LIMIT_DISABLE = 0,
+    PID_LIMIT_ENABLE
+} pid_limit_mode_t;
+
 /* P/PI/PD/PID控制器结构体 */
 typedef struct
 {
@@ -34,14 +40,14 @@ typedef struct
     float out_min;       /* 输出下限 */
     float out_max;       /* 输出上限 */
     float integral_max;  /* 积分限幅 */
-    uint8_t enable_limit;/* 输出限幅使能 */
+    pid_limit_mode_t enable_limit;/* 输出限幅使能 */
 
     float kt;            /* Back-calculation 增益 */
     float backcalc_error;/* 上一拍饱和误差 */
 } pid_controller_t;
 
 /* P/PI/PD/PID控制器初始化 */
-void pid_init(pid_controller_t *pid, pid_mode_t mode, float kp, float ki, float kd, float out_min, float out_max, uint8_t enable_limit);
+void pid_init(pid_controller_t *pid, pid_mode_t mode, float kp, float ki, float kd, float out_min, float out_max, pid_limit_mode_t enable_limit);
 
 /* 设置PID参数 */
 void pid_set_gains(pid_controller_t *pid, float kp, float ki, float kd);
@@ -50,7 +56,7 @@ void pid_set_gains(pid_controller_t *pid, float kp, float ki, float kd);
 void pid_set_output_limit(pid_controller_t *pid, float out_min, float out_max);
 
 /* 设置输出限幅使能 */
-void pid_set_limit_enable(pid_controller_t *pid, uint8_t enable_limit);
+void pid_set_limit_enable(pid_controller_t *pid, pid_limit_mode_t enable_limit);
 
 /* 设置积分限幅 */
 void pid_set_integral_limit(pid_controller_t *pid, float integral_max);

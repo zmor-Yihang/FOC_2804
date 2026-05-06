@@ -82,9 +82,9 @@ static void fluxObserver_closed_callback(void)
 void fluxObseverClosed_init(float speed_rpm)
 {
     // 初始化电流环与速度环 PID 控制器
-    pid_init(&pid_id, PID_MODE_PI, FLUX_OBSERVER_CURRENT_PID_KP, FLUX_OBSERVER_CURRENT_PID_KI, 0.0f, -U_DC / 2.0f, U_DC / 2.0f, 0U);
-    pid_init(&pid_iq, PID_MODE_PI, FLUX_OBSERVER_CURRENT_PID_KP, FLUX_OBSERVER_CURRENT_PID_KI, 0.0f, -U_DC / 2.0f, U_DC / 2.0f, 0U);
-    pid_init(&pid_speed, PID_MODE_PI, FLUX_OBSERVER_SPEED_PID_KP, FLUX_OBSERVER_SPEED_PID_KI, 0.0f, FLUX_OBSERVER_SPEED_PID_OUT_MIN, FLUX_OBSERVER_SPEED_PID_OUT_MAX, 1U);
+    pid_init(&pid_id, PID_MODE_PI, FLUX_OBSERVER_CURRENT_PID_KP, FLUX_OBSERVER_CURRENT_PID_KI, 0.0f, -U_DC / 2.0f, U_DC / 2.0f, PID_LIMIT_DISABLE);
+    pid_init(&pid_iq, PID_MODE_PI, FLUX_OBSERVER_CURRENT_PID_KP, FLUX_OBSERVER_CURRENT_PID_KI, 0.0f, -U_DC / 2.0f, U_DC / 2.0f, PID_LIMIT_DISABLE);
+    pid_init(&pid_speed, PID_MODE_PI, FLUX_OBSERVER_SPEED_PID_KP, FLUX_OBSERVER_SPEED_PID_KI, 0.0f, FLUX_OBSERVER_SPEED_PID_OUT_MIN, FLUX_OBSERVER_SPEED_PID_OUT_MAX, PID_LIMIT_ENABLE);
 
     // 初始化 FOC 控制句柄
     foc_init(&foc_fluxObserver_handle, &pid_id, &pid_iq, &pid_speed);
