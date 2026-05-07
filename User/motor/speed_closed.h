@@ -6,6 +6,7 @@
 #include "../utils/print.h"
 #include "../sensor/current_sense.h"
 #include "../app/user_config.h"
+#include "../adv_alg/cogging_comp.h"
 
 void speedClosed_init(float speed_rpm);
 void speedClosedDebug_print_info(void);

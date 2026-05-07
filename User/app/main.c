@@ -24,11 +24,11 @@ int main(void)
     while (1)
     {
         // currentClosedDebug_print_info();
-        // speedClosedDebug_print_info();
+        speedClosedDebug_print_info();
         // positionClosedDebug_print_info();
         // speedWeakClosedDebug_print_info();
         // fluxObseverClosedDebug_print_info();
         // as5600_test_poll();
-        coggingCalibrationModeDebug_print_info();
+        // coggingCalibrationModeDebug_print_info();
     }
 }

@@ -1,12 +1,15 @@
 #ifndef __COGGING_CALIBRATION_MODE_H__
 #define __COGGING_CALIBRATION_MODE_H__
 
+#include "../app/user_config.h"
+
+#if (COGGING_CALIB_ENABLE != 0U)
+
 #include "../foc/foc.h"
 #include "../sensor/encoder.h"
 #include "../sensor/current_sense.h"
 #include "../utils/print.h"
 #include "../utils/angle_utils.h"
-#include "../app/user_config.h"
 
 /**
  * @brief 初始化齿槽转矩标定模式
@@ -19,5 +22,7 @@ void coggingCalibrationMode_init(void);
  * @note 当前仅发送补偿值相关字段，便于抓取补偿表
  */
 void coggingCalibrationModeDebug_print_info(void);
+
+#endif /* COGGING_CALIB_ENABLE */
 
 #endif /* __COGGING_CALIBRATION_MODE_H__ */

@@ -1,40 +1,4 @@
 #include "speed_closed.h"
-#include "../adv_alg/cogging_comp_table.h"
-
-static float speed_closed_get_cogging_comp_iq(uint16_t raw_count)
-{
-    const float *iq_table = g_cogging_comp_iq_table;
-    uint32_t scaled_pos;
-    uint16_t idx_l;
-    uint16_t idx_r;
-    float ratio;
-
-    if (COGGING_COMP_TABLE_SIZE == 0U)
-    {
-        return 0.0f;
-    }
-
-    if (COGGING_COMP_TABLE_SIZE == 1U)
-    {
-        return iq_table[0];
-    }
-
-    scaled_pos = (uint32_t)raw_count * (uint32_t)COGGING_COMP_TABLE_SIZE;
-    idx_l = (uint16_t)(scaled_pos / (uint32_t)ENCODER_CPR);
-    if (idx_l >= COGGING_COMP_TABLE_SIZE)
-    {
-        idx_l = (uint16_t)(COGGING_COMP_TABLE_SIZE - 1U);
-    }
-
-    idx_r = (uint16_t)(idx_l + 1U);
-    if (idx_r >= COGGING_COMP_TABLE_SIZE)
-    {
-        idx_r = 0U;
-    }
-
-    ratio = (float)(scaled_pos % (uint32_t)ENCODER_CPR) / (float)ENCODER_CPR;
-    return iq_table[idx_l] + (iq_table[idx_r] - iq_table[idx_l]) * ratio;
-}
 
 static foc_t foc_speed_closed_handle;
 
@@ -95,7 +59,7 @@ static void speed_closed_callback(void)
 
     /* 齿槽转矩补偿：根据编码器原始计数插值出对应的 q 轴补偿电流 */
     uint16_t raw_count = encoder_get_rawCount();
-    cogging_comp_iq_temp = speed_closed_get_cogging_comp_iq(raw_count);
+    cogging_comp_iq_temp = coggingComp_getIqByRawCount(raw_count);
     foc_speed_closed_handle.target_iq = speed_loop_iq_temp + cogging_comp_iq_temp;
 
     if (foc_speed_closed_handle.target_iq > SPEED_PID_OUT_MAX)

@@ -3,19 +3,13 @@
 
 #include "stm32g4xx_hal.h"
 #include "../app/user_config.h"
+
+#if (COGGING_CALIB_ENABLE != 0U)
+
 #include "../alg/pid.h"
 #include <string.h>
 #include "../utils/angle_utils.h"
 #include "../utils/math_utils.h"
-
-#define COGGING_CALIB_TABLE_SIZE 512U          // 单圈补偿表采样点数
-#define COGGING_CALIB_SETTLE_TICKS 200U        // 每个采样点到位后的稳定等待拍数
-#define COGGING_CALIB_REPEAT_COUNT 10U          // 整张单圈补偿表重复采样次数，最终按圈求平均
-#define COGGING_CALIB_MAX_MECH_SPEED_RPM 5.0f  // 允许记录数据时的最大机械转速，超过认为尚未稳定
-#define COGGING_CALIB_POSITION_KP 0.8f         // 标定用位置 PD 的比例系数
-#define COGGING_CALIB_POSITION_KD 0.02f        // 标定用位置 PD 的微分系数
-#define COGGING_CALIB_POSITION_OUT_MIN (-0.8f) // 标定用 q 轴目标电流下限(A)
-#define COGGING_CALIB_POSITION_OUT_MAX (0.8f)  // 标定用 q 轴目标电流上限(A)
 
 typedef enum
 {
@@ -51,5 +45,7 @@ uint8_t coggingCalib_isFinished(cogging_calib_t *handle);
 uint16_t coggingCalib_getTableSize(void);
 uint16_t coggingCalib_getRawCountByIndex(cogging_calib_t *handle, uint16_t index);
 float coggingCalib_getIqCompByIndex(cogging_calib_t *handle, uint16_t index);
+
+#endif /* COGGING_CALIB_ENABLE */
 
 #endif /* __COGGING_CALIBRATION_H__ */

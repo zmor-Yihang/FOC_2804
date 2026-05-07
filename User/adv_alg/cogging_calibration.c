@@ -1,5 +1,7 @@
 #include "cogging_calibration.h"
 
+#if (COGGING_CALIB_ENABLE != 0U)
+
 /**
  * @file cogging_calibration.c
  * @brief 齿槽转矩补偿表离线标定状态机
@@ -417,3 +419,5 @@ float coggingCalib_getIqCompByIndex(cogging_calib_t *handle, uint16_t index)
 
     return handle->iq_comp_table[index];
 }
+
+#endif /* COGGING_CALIB_ENABLE */

@@ -74,6 +74,18 @@
 #define FLUX_OBSERVER_PLL_KI              0.4e6f                           // PLL积分增益
 #define FLUX_OBSERVER_PLL_SPEED_LIMIT_RPM 5000.0f                          // 机械转速限幅(rpm)
 
+// 齿槽转矩补偿参数
+#define COGGING_COMP_ENABLE               1U            // 1:启用齿槽转矩补偿前馈 0:关闭齿槽转矩补偿前馈
+#define COGGING_CALIB_ENABLE              0U            // 1:编译离线标定代码 0:只使用已有补偿表前馈
+#define COGGING_COMP_TABLE_SIZE           512U          // 单圈齿槽补偿表点数
+#define COGGING_CALIB_TABLE_SIZE          COGGING_COMP_TABLE_SIZE
+#define COGGING_CALIB_SETTLE_TICKS        200U          // 每个采样点到位后的稳定等待拍数
+#define COGGING_CALIB_REPEAT_COUNT        10U           // 整张单圈补偿表重复采样次数
+#define COGGING_CALIB_MAX_MECH_SPEED_RPM  5.0f          // 允许记录数据时的最大机械转速(rpm)
+#define COGGING_CALIB_POSITION_KP         0.8f          // 标定用位置 PD 的比例系数
+#define COGGING_CALIB_POSITION_KD         0.02f         // 标定用位置 PD 的微分系数
+#define COGGING_CALIB_POSITION_OUT_MIN    -0.8f         // 标定用 q 轴目标电流下限(A)
+#define COGGING_CALIB_POSITION_OUT_MAX    0.8f          // 标定用 q 轴目标电流上限(A)
 
 // 数据类型
 typedef struct

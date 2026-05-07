@@ -1,4 +1,7 @@
 #include "cogging_calibration_mode.h"
+
+#if (COGGING_CALIB_ENABLE != 0U)
+
 #include "../adv_alg/cogging_calibration.h"
 #include <stdio.h>
 
@@ -163,30 +166,30 @@ void coggingCalibrationModeDebug_print_info(void)
         int print_len = 0;
         int written;
 
-#define COGGING_FINAL_APPEND(...)                                                                                 \
-        do                                                                                                        \
-        {                                                                                                         \
-            written = snprintf(&cogging_final_print_buffer[print_len],                                            \
-                               sizeof(cogging_final_print_buffer) - (size_t)print_len,                            \
-                               __VA_ARGS__);                                                                      \
-            if (written < 0)                                                                                      \
-            {                                                                                                     \
-                return;                                                                                          \
-            }                                                                                                     \
-            if ((size_t)written >= (sizeof(cogging_final_print_buffer) - (size_t)print_len))                      \
-            {                                                                                                     \
-                print_len = (int)sizeof(cogging_final_print_buffer) - 1;                                          \
-            }                                                                                                     \
-            else                                                                                                  \
-            {                                                                                                     \
-                print_len += written;                                                                             \
-            }                                                                                                     \
-        } while (0)
+#define COGGING_FINAL_APPEND(...)                                                        \
+    do                                                                                   \
+    {                                                                                    \
+        written = snprintf(&cogging_final_print_buffer[print_len],                       \
+                           sizeof(cogging_final_print_buffer) - (size_t)print_len,       \
+                           __VA_ARGS__);                                                 \
+        if (written < 0)                                                                 \
+        {                                                                                \
+            return;                                                                      \
+        }                                                                                \
+        if ((size_t)written >= (sizeof(cogging_final_print_buffer) - (size_t)print_len)) \
+        {                                                                                \
+            print_len = (int)sizeof(cogging_final_print_buffer) - 1;                     \
+        }                                                                                \
+        else                                                                             \
+        {                                                                                \
+            print_len += written;                                                        \
+        }                                                                                \
+    } while (0)
 
         COGGING_FINAL_APPEND("/* COGGING_TABLE_BEGIN raw_count=%u iq_count=%u */\r\n",
                              (unsigned int)cogging_final_table_size,
                              (unsigned int)cogging_final_table_size);
-        COGGING_FINAL_APPEND("#include \"cogging_comp_table.h\"\r\n\r\n");
+        COGGING_FINAL_APPEND("#include \"cogging_comp.h\"\r\n\r\n");
         COGGING_FINAL_APPEND("const uint16_t g_cogging_comp_raw_count_table[COGGING_COMP_TABLE_SIZE] = {\r\n");
 
         for (idx = 0U; idx < cogging_final_table_size; ++idx)
@@ -245,3 +248,5 @@ void coggingCalibrationModeDebug_print_info(void)
         usart_send_data((uint8_t *)cogging_final_print_buffer, (uint16_t)print_len);
     }
 }
+
+#endif /* COGGING_CALIB_ENABLE */
