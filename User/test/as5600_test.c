@@ -43,7 +43,7 @@ static uint8_t as5600_test_read_raw(uint16_t *raw_count)
 
     while ((HAL_GetTick() - start_tick) < 20U)
     {
-        if (as5600_poll_rawCount(raw_count) != 0U)
+        if (as5600_read_rawCountAsync(raw_count) != 0U)
         {
             return 1U;
         }
@@ -102,7 +102,7 @@ void as5600_test_poll(void)
     }
 
     float meas_mech_rad = (float)raw_count * AS5600_TEST_RAW_TO_RAD;
-    float err_rad = wrap_pm_pi(meas_mech_rad - as5600_test_cmd_mech_rad);
+    float err_rad = wrap_neg_pi_to_pi(meas_mech_rad - as5600_test_cmd_mech_rad);
     float sin_err;
     float cos_err;
 

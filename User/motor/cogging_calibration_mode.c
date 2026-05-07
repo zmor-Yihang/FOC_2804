@@ -108,9 +108,7 @@ void coggingCalibrationMode_init(void)
     zero_alignment(&foc_cogging_calib_handle);
 
     // 以当前机械角为单圈标定起点，并清零机械位置累计
-    float start_mech_angle = 0.0f;
-    while (encoder_get_mechanicalAngleBlock(&start_mech_angle) == 0U)
-        ;
+    float start_mech_angle = encoder_get_mechanicalAngleBlock();
     encoder_reset_mechanicalPosition(0.0f);
     coggingCalib_init(&cogging_calib_handle, start_mech_angle);
     cogging_final_table_printed = 0U;

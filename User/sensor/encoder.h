@@ -16,15 +16,12 @@
 
 void encoder_init(void);
 void encoder_update(void);
-
-float encoder_get_alignmentAngle(void);
 float encoder_get_pllAngle(void);
 float encoder_get_pllSpeed(void);
 float encoder_get_mechanicalAngle(void);
-uint8_t encoder_get_mechanicalAngleBlock(float *mech_angle_rad);
-uint16_t encoder_get_rawCount(void);
-uint8_t encoder_get_rawCountBlock(uint16_t *raw_count);
+float encoder_get_mechanicalAngleBlock(void);
 float encoder_get_mechanicalPosition(void);
 void encoder_reset_mechanicalPosition(float position_rad);
+uint16_t encoder_get_rawCount(void);
 
 #endif /* __ENCODER_H__ */

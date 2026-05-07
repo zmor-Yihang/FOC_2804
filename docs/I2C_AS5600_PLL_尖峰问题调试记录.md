@@ -46,7 +46,7 @@
 
 - 输出最短角误差：
   
-  `phase_error = wrap_pm_pi(angle_meas - angle_pll)`
+  `phase_error = wrap_neg_pi_to_pi(angle_meas - angle_pll)`
 - 观察 `sin/cos` 量，而不是只看锯齿波
 - 观察展开角（unwrap）后的连续曲线
 

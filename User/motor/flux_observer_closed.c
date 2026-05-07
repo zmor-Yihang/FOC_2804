@@ -49,11 +49,11 @@ static void fluxObserver_closed_callback(void)
     fluxObserver_estimate(&flux_observer);
 
     // 调试对比：保留编码器反馈
-    float angle_encoder = wrap_pm_pi(encoder_get_pllAngle() - foc_fluxObserver_handle.angle_offset);
+    float angle_encoder = wrap_neg_pi_to_pi(encoder_get_pllAngle() - foc_fluxObserver_handle.angle_offset);
     float speed_encoder = encoder_get_pllSpeed();
 
     // 控制反馈角度与速度：改用观测器输出
-    float angle_el = wrap_pm_pi(fluxObserver_get_angle(&flux_observer));
+    float angle_el = wrap_neg_pi_to_pi(fluxObserver_get_angle(&flux_observer));
     float speed_feedback = fluxObserver_get_speed(&flux_observer);
 
     float angle_observer = angle_el;
@@ -75,7 +75,7 @@ static void fluxObserver_closed_callback(void)
     speed_obs_rpm_temp = speed_observer;
     angle_encoder_temp = angle_encoder;
     angle_observer_temp = angle_observer;
-    flux_angle_temp = wrap_pm_pi(flux_observer.theta_est);
+    flux_angle_temp = wrap_neg_pi_to_pi(flux_observer.theta_est);
     flux_linkage_temp = sqrtf(flux_observer.xhat_alpha * flux_observer.xhat_alpha + flux_observer.xhat_beta * flux_observer.xhat_beta);
 }
 

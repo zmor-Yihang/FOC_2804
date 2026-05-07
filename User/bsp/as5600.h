@@ -37,7 +37,7 @@
 #define AS5600_BURN_SETTING 0x40 // 烧录MANG/CONF命令
 
 void as5600_init(void);
-uint8_t as5600_poll_rawCount(uint16_t *raw_count);
+uint8_t as5600_read_rawCountAsync(uint16_t *raw_count);
 uint8_t as5600_read_rawCountBlock(uint16_t *raw_count);
 
 #endif /* __AS5600_H__ */

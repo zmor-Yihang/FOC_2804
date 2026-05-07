@@ -69,7 +69,7 @@ void fluxObserver_estimate(fluxobserver_t *obs)
     obs->theta_est = atan2f(eta_beta, eta_alpha);
 
     // 角度误差 e_theta = theta_hat - z1
-    float e_theta = wrap_pm_pi(obs->theta_est - obs->z1);
+    float e_theta = wrap_neg_pi_to_pi(obs->theta_est - obs->z1);
     float speed_integral_step = obs->k_pll_ki * e_theta * cfg->ts;
 
     // 与 encoder PLL 保持一致：到达限幅后仅允许反向积分释放，避免积分器继续累积
@@ -85,7 +85,7 @@ void fluxObserver_estimate(fluxobserver_t *obs)
     }
 
     // 每个控制周期都使用比例校正项 + 当前速度估计推进 PLL 相位
-    obs->z1 = wrap_pm_pi(obs->z1 + (obs->speed_rad_s + obs->k_pll_kp * e_theta) * cfg->ts);
+    obs->z1 = wrap_neg_pi_to_pi(obs->z1 + (obs->speed_rad_s + obs->k_pll_kp * e_theta) * cfg->ts);
     obs->z2 = obs->speed_rad_s;
 
     // 电角速度 -> 机械转速 (rpm)

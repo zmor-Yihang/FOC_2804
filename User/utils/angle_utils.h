@@ -7,7 +7,7 @@
  * @return 包络后的最短路径角度误差
  * @note  主要用于误差计算，避免跨零点时角度突变
  */
-float wrap_pm_pi(float angle_rad);
+float wrap_neg_pi_to_pi(float angle_rad);
 
 /**
  * @brief 将角度包络到[0, 2π)范围

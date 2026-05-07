@@ -1,7 +1,7 @@
 #include "angle_utils.h"
 #include "../app/user_config.h"
 
-float wrap_pm_pi(float angle_rad)
+float wrap_neg_pi_to_pi(float angle_rad)
 {
     while (angle_rad > (MATH_TWO_PI * 0.5f))
     {
