@@ -7,6 +7,9 @@ static pid_controller_t pid_iq;
 
 static pid_controller_t pid_speed;
 
+static luenberger_dob_t luenberger_dob;
+static uint8_t speed_loop_div = 0;
+
 // 打印用
 static float speed_rpm_temp = 0.0f;
 static float pll_angle_el_temp = 0.0f;
@@ -26,6 +29,9 @@ static float v_q_out_temp = 0.0f;
 static float v_mag_temp = 0.0f;
 static float speed_loop_iq_temp = 0.0f;
 static float cogging_comp_iq_temp = 0.0f;
+static float dob_iq_comp_temp = 0.0f;
+static float dob_d_hat_temp = 0.0f;
+static float dob_omega_hat_temp = 0.0f;
 
 static void speed_closed_callback(void)
 {
@@ -47,20 +53,35 @@ static void speed_closed_callback(void)
     dq_t i_dq = park_transform(i_alphabeta, angle_el);
 
     // 速度闭环
-    static uint8_t speed_loop_div = 0;
     if (++speed_loop_div >= FOC_SPEED_LOOP_DIVIDER)
     {
         speed_loop_div = 0;
         float speed_loop_dt = FOC_CURRENT_LOOP_DT_S * (float)FOC_SPEED_LOOP_DIVIDER;
+        float omega_mech_rad_s = speed_feedback * (MATH_TWO_PI / 60.0f);
         speed_loop_iq_temp = pid_calculate(foc_speed_closed_handle.pid_speed, foc_speed_closed_handle.target_speed, speed_feedback, speed_loop_dt);
+
+    // 龙伯格扰动观测器
+#if (LUENBERGER_DOB_ENABLE == 1)
+        dob_iq_comp_temp = luenbergerDOB_update(&luenberger_dob, omega_mech_rad_s, i_dq.q);
+        dob_d_hat_temp = luenbergerDOB_get_d_hat(&luenberger_dob);
+        dob_omega_hat_temp = luenbergerDOB_get_omega_hat(&luenberger_dob);
+#else
+        dob_iq_comp_temp = 0.0f;
+        dob_d_hat_temp = 0.0f;
+        dob_omega_hat_temp = omega_mech_rad_s;
+#endif /* LUENBERGER_DOB_ENABLE */
     }
 
     foc_speed_closed_handle.target_id = 0.0f;
 
     /* 齿槽转矩补偿：根据编码器原始计数插值出对应的 q 轴补偿电流 */
+#if (COGGING_COMP_ENABLE == 1U)
     uint16_t raw_count = encoder_get_rawCount();
     cogging_comp_iq_temp = coggingComp_getIqByRawCount(raw_count);
-    foc_speed_closed_handle.target_iq = speed_loop_iq_temp + cogging_comp_iq_temp;
+#else
+    cogging_comp_iq_temp = 0.0f;
+#endif /* COGGING_COMP_ENABLE */
+    foc_speed_closed_handle.target_iq = speed_loop_iq_temp + cogging_comp_iq_temp + dob_iq_comp_temp;
 
     if (foc_speed_closed_handle.target_iq > SPEED_PID_OUT_MAX)
     {
@@ -107,11 +128,29 @@ void speedClosed_init(float speed_rpm)
     // 设置目标速度
     foc_set_id(&foc_speed_closed_handle, 0.0f);
     foc_set_speed(&foc_speed_closed_handle, speed_rpm);
+    speed_loop_div = 0U;
     speed_loop_iq_temp = 0.0f;
     cogging_comp_iq_temp = 0.0f;
+    dob_iq_comp_temp = 0.0f;
+    dob_d_hat_temp = 0.0f;
+    dob_omega_hat_temp = 0.0f;
+
+    luenbergerDOB_init(&luenberger_dob,
+                       LUENBERGER_DOB_TS_S,
+                       LUENBERGER_DOB_J_KGM2,
+                       LUENBERGER_DOB_B_NM_S_RAD,
+                       LUENBERGER_DOB_KT_NM_A,
+                       LUENBERGER_DOB_BANDWIDTH_HZ,
+                       LUENBERGER_DOB_ZETA,
+                       LUENBERGER_DOB_IQ_COMP_MAX,
+                       LUENBERGER_DOB_COMP_GAIN);
 
     // 零点对齐
     zero_alignment(&foc_speed_closed_handle);
+
+    float omega_mech_rad_s = encoder_get_pllSpeed() * (MATH_TWO_PI / 60.0f);
+    luenbergerDOB_reset(&luenberger_dob, omega_mech_rad_s);
+    dob_omega_hat_temp = luenbergerDOB_get_omega_hat(&luenberger_dob);
 
     // 注册回调函数
     adc_register_injectedCallback(speed_closed_callback);
@@ -127,7 +166,8 @@ void speedClosedDebug_print_info(void)
     }
     float pll_angle_deg = pll_angle_normalized * 57.2958f;
 
-    float data[16] = {speed_rpm_temp, pll_angle_deg, id_temp, iq_temp, ia_temp, ib_temp, ic_temp,
-                      target_iq_temp, target_id_temp, v_d_pi_temp, v_q_pi_temp, v_d_ff_temp, v_q_ff_temp, v_d_out_temp, v_q_out_temp, v_mag_temp};
-    vofa_send(data, 16);
+    float data[19] = {speed_rpm_temp, pll_angle_deg, id_temp, iq_temp, ia_temp, ib_temp, ic_temp,
+                      target_iq_temp, target_id_temp, v_d_pi_temp, v_q_pi_temp, v_d_ff_temp, v_q_ff_temp, v_d_out_temp, v_q_out_temp, v_mag_temp,
+                      dob_iq_comp_temp, dob_d_hat_temp, dob_omega_hat_temp};
+    vofa_send(data, 19);
 }

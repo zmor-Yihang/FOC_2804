@@ -12,10 +12,6 @@
  */
 float coggingComp_getIqByRawCount(uint16_t raw_count)
 {
-#if (COGGING_COMP_ENABLE == 0U)
-    (void)raw_count;
-    return 0.0f;
-#else
     const float *iq_table = g_cogging_comp_iq_table;
     uint32_t scaled_pos;
     uint16_t idx_l;
@@ -48,7 +44,6 @@ float coggingComp_getIqByRawCount(uint16_t raw_count)
 
     ratio = (float)(scaled_pos % (uint32_t)ENCODER_CPR) / (float)ENCODER_CPR;
     return iq_table[idx_l] + (iq_table[idx_r] - iq_table[idx_l]) * ratio;
-#endif
 }
 
 const uint16_t g_cogging_comp_raw_count_table[COGGING_COMP_TABLE_SIZE] = {

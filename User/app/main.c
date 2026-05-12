@@ -14,10 +14,10 @@ int main(void)
     gpio_m1_enable();
 
     // currentClosed_init(0.0f, 0.5f);
-    speedClosed_init(5); // 速度闭环
+    speedClosed_init(2); // 速度闭环
     // positionClosed_init(0.0f); // 位置闭环
     // speedWeakClosed_init(1000);// 弱磁速度闭环
-    // fluxObseverClosed_init(3000);// 无感速度闭环
+    // fluxObseverClosed_init(1000);// 无感速度闭环
     // as5600_test_init();  //
     // coggingCalibrationMode_init(); // 齿槽转矩标定
 

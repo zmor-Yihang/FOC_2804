@@ -12,7 +12,7 @@
 
 // 电机参数
 #define MOTOR_POLE_PAIRS                 7        // 电机极对数
-#define MOTOR_RS_Ω                       1.5f     // 定子电阻，实测1欧
+#define MOTOR_RS_Ω                       1.5f     // 定子电阻
 #define MOTOR_LD_H                       0.86e-3f // d轴电感(H)
 #define MOTOR_LQ_H                       0.86e-3f // q轴电感(H)
 #define MOTOR_PSI_F                      0.0035f  // 永磁体磁链(Wb)
@@ -21,15 +21,15 @@
 // 控制参数
 #define FOC_CURRENT_LOOP_FREQ_HZ         10000.0f // 电流环执行频率(Hz)
 #define FOC_SPEED_LOOP_DIVIDER           10U      // 速度环相对电流环的分频系数
-#define FOC_DECOUPLING_ENABLE            1        // 1:启用前馈解耦 0:关闭前馈解耦
+#define FOC_DECOUPLING_ENABLE            0        // 1:启用前馈解耦 0:关闭前馈解耦
 #define FOC_ELEC_ANGLE_TRIM_RAD          0.00f     // 电角度手动微调量(rad)，正常情况下保持为0，仅在排查固定偏差时临时微调
 
 // 编码器参数
-#define ENCODER_COUNT_SWAP               0         // 1：启用编码器计数翻转
-#define ENCODER_PLL_KP                   1776.0f   // 编码器速度 PLL 比例增益  200Hz带宽
-#define ENCODER_PLL_KI                   1.58e6f   // 编码器速度 PLL 积分增益
-#define ENCODER_PLL_SPEED_LIMIT_RPM      5000.0f   // 编码器 PLL 机械转速限幅(rpm)
-#define ENCODER_PLL_ANGLE_COMP_ENABLE    1         // 1：启用拍延时补偿
+#define ENCODER_COUNT_SWAP               0            // 1：启用编码器计数翻转
+#define ENCODER_PLL_KP                   1776.0f      // 编码器速度 PLL 比例增益  200Hz带宽
+#define ENCODER_PLL_KI                   1.58e6f      // 编码器速度 PLL 积分增益
+#define ENCODER_PLL_SPEED_LIMIT_RPM      5000.0f      // 编码器 PLL 机械转速限幅(rpm)
+#define ENCODER_PLL_ANGLE_COMP_ENABLE    1            // 1：启用拍延时补偿
 #define ENCODER_PLL_ANGLE_COMP_DELAY_S   1.5e-4f      // 输出补偿延时(s)
 
 // 电流环控制参数
@@ -43,6 +43,17 @@
 #define SPEED_PID_KI                     2.5f         // 速度环PI积分系数
 #define SPEED_PID_OUT_MIN                -0.8f        // 速度环输出下限
 #define SPEED_PID_OUT_MAX                0.8f         // 速度环输出上限
+
+// 龙伯格扰动观测器参数
+#define LUENBERGER_DOB_ENABLE            1U                                                   // 1:启用速度环负载扰动补偿 0:关闭
+#define LUENBERGER_DOB_TS_S              ((1.0f / FOC_CURRENT_LOOP_FREQ_HZ) * (float)FOC_SPEED_LOOP_DIVIDER) // 观测器执行周期(s)
+#define LUENBERGER_DOB_J_KGM2            3.7e-6f                                              // 转动惯量(kg·m²)，需按实际负载修正
+#define LUENBERGER_DOB_B_NM_S_RAD        0.0f                                                 // 粘性摩擦系数(N·m·s/rad)，未知可先设0
+#define LUENBERGER_DOB_KT_NM_A           (1.5f * (float)MOTOR_POLE_PAIRS * MOTOR_PSI_F)        // q轴转矩常数(N·m/A)
+#define LUENBERGER_DOB_BANDWIDTH_HZ      30.0f                                                // 观测器带宽(Hz)
+#define LUENBERGER_DOB_ZETA              1.0f                                                 // 观测器阻尼系数
+#define LUENBERGER_DOB_COMP_GAIN         1.0f                                                // 补偿开启比例，调试稳定后可逐步增大
+#define LUENBERGER_DOB_IQ_COMP_MAX       (0.2f * SPEED_PID_OUT_MAX)                           // q轴补偿电流限幅(A)
 
 // 位置环参数：输入机械位置rad，PID直接输出q轴目标电流A
 #define FOC_POSITION_LOOP_DIVIDER        10U          // 位置环相对电流环的分频系数
@@ -62,7 +73,7 @@
 
 // 无感磁链观测器参数
 #define FLUX_OBSERVER_GAMMA               5.0e7f                           // 观测器非线性增益
-#define FLUX_OBSERVER_CURRENT_PID_KP      5.0f                            // 无感模式电流环PI比例系数
+#define FLUX_OBSERVER_CURRENT_PID_KP      5.0f                             // 无感模式电流环PI比例系数
 #define FLUX_OBSERVER_CURRENT_PID_KI      2670.0f                          // 无感模式电流环PI积分系数
 #define FLUX_OBSERVER_SPEED_PID_KP        0.004f                           // 无感模式速度环PI比例系数
 #define FLUX_OBSERVER_SPEED_PID_KI        2.5f                             // 无感模式速度环PI积分系数
@@ -70,12 +81,12 @@
 #define FLUX_OBSERVER_SPEED_PID_OUT_MAX   0.8f                             // 无感模式速度环输出上限(A)
 
 #define FLUX_OBSERVER_TS_S                (1.0 / FOC_CURRENT_LOOP_FREQ_HZ) // 观测器执行周期(s)
-#define FLUX_OBSERVER_PLL_KP              850.0f                           // PLL比例增益
-#define FLUX_OBSERVER_PLL_KI              0.4e6f                           // PLL积分增益
+#define FLUX_OBSERVER_PLL_KP              1776.0f                          // PLL比例增益
+#define FLUX_OBSERVER_PLL_KI              1.58e6f                           // PLL积分增益
 #define FLUX_OBSERVER_PLL_SPEED_LIMIT_RPM 5000.0f                          // 机械转速限幅(rpm)
 
 // 齿槽转矩补偿参数
-#define COGGING_COMP_ENABLE               1U            // 1:启用齿槽转矩补偿前馈 0:关闭齿槽转矩补偿前馈
+#define COGGING_COMP_ENABLE               0U            // 1:启用齿槽转矩补偿前馈 0:关闭齿槽转矩补偿前馈
 #define COGGING_CALIB_ENABLE              0U            // 1:编译离线标定代码 0:只使用已有补偿表前馈
 #define COGGING_COMP_TABLE_SIZE           512U          // 单圈齿槽补偿表点数
 #define COGGING_CALIB_TABLE_SIZE          COGGING_COMP_TABLE_SIZE
