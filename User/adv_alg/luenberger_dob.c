@@ -44,7 +44,7 @@ void luenbergerDOB_init(luenberger_dob_t *obs, float ts, float inertia_j, float 
 
 void luenbergerDOB_reset(luenberger_dob_t *obs, float omega_mech_rad_s)
 {
-    /* 使能或重新对齐后，用当前实测速度初始化 omega_hat，避免启动瞬间产生估计误差冲击。 */
+    /* 使能或重新对齐后，用当前实测速度初始化 omega_hat，避免启动瞬间产生估计误差冲击 */
     obs->omega_hat = omega_mech_rad_s;
     obs->d_hat = 0.0f;
     obs->iq_comp = 0.0f;
@@ -67,17 +67,17 @@ float luenbergerDOB_update(luenberger_dob_t *obs, float omega_mech_rad_s, float 
     return obs->iq_comp;
 }
 
-float luenbergerDOB_get_d_hat(const luenberger_dob_t *obs)
+float luenbergerDOB_get_d_hat(luenberger_dob_t *obs)
 {
     return obs->d_hat;
 }
 
-float luenbergerDOB_get_omega_hat(const luenberger_dob_t *obs)
+float luenbergerDOB_get_omega_hat(luenberger_dob_t *obs)
 {
     return obs->omega_hat;
 }
 
-float luenbergerDOB_get_iq_comp(const luenberger_dob_t *obs)
+float luenbergerDOB_get_iq_comp(luenberger_dob_t *obs)
 {
     return obs->iq_comp;
 }

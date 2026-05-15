@@ -31,8 +31,9 @@ void luenbergerDOB_init(luenberger_dob_t *obs, float ts, float inertia_j, float 
 void luenbergerDOB_reset(luenberger_dob_t *obs, float omega_mech_rad_s);
 float luenbergerDOB_update(luenberger_dob_t *obs, float omega_mech_rad_s, float iq_actual);
 
-float luenbergerDOB_get_d_hat(const luenberger_dob_t *obs);
-float luenbergerDOB_get_omega_hat(const luenberger_dob_t *obs);
-float luenbergerDOB_get_iq_comp(const luenberger_dob_t *obs);
+float luenbergerDOB_get_d_hat(luenberger_dob_t *obs);
+float luenbergerDOB_get_omega_hat(luenberger_dob_t *obs);
+float luenbergerDOB_get_iq_comp(luenberger_dob_t *obs);
+
 
 #endif /* __LUENBERGER_DOB_H__ */
