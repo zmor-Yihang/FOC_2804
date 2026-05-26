@@ -19,8 +19,9 @@
 #include "../motor/flux_observer_closed.h"
 #include "../motor/position_closed.h"
 #include "../motor/cogging_calibration_mode.h"
-
-#include "../test/as5600_test.h"
+#include "../motor/mxlemming_observer_closed.h"
+#include "../motor/improved_flux_observer_closed.h"
+#include "../motor/resistance_measure_mode.h"
 
 
 
