@@ -55,9 +55,9 @@ void improvedFluxObserver_set_initial_angle(improved_fluxobserver_t *obs, float 
  *   ψ̂_r        ← ψ̂_s − L_s · i_αβ
  *   |ψ̂_r|^2   = ψ̂_rα^2 + ψ̂_rβ^2
  *   flux_error = ψ_e^2 − |ψ̂_r|^2                       磁链圆误差
- *   ψ̂_rj      = [−ψ̂_rβ, ψ̂_rα]                         转子磁链旋转 +π/2
+ *   ψ̂_rj      = [−ψ̂_rβ, ψ̂_rα]                          转子磁链旋转 +π/2
  *   search    = ψ̂_r + k · ψ̂_rj                         混合搜索方向（幅值 + 相位）
- *   y         = u_αβ − R_s · i_αβ                       电压方程开环项
+ *   y         = u_αβ − R_s · i_αβ                      电压方程开环项
  *   ψ̂_s     ← ψ̂_s + Ts · (y + 0.5·λ·search·flux_error) 前向 Euler 积分 Eq.(15)
  *   theta_est ← atan2(ψ̂_rβ, ψ̂_rα)                      Eq.(8)
  *   PLL 跟踪 theta_est，输出 theta_pll 与 speed_rad_s

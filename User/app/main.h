@@ -22,6 +22,7 @@
 #include "../motor/mxlemming_observer_closed.h"
 #include "../motor/improved_flux_observer_closed.h"
 #include "../motor/resistance_measure_mode.h"
+#include "../motor/inductance_measure_mode.h"
 
 
 

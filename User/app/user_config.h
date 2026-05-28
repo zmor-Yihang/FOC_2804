@@ -13,8 +13,8 @@
 // 电机参数
 #define MOTOR_POLE_PAIRS                          7                              // 电机极对数
 #define MOTOR_RS_Ω                                1.6f                           // 定子电阻
-#define MOTOR_LD_H                                0.86e-3f                       // d轴电感(H)
-#define MOTOR_LQ_H                                0.86e-3f                       // q轴电感(H)
+#define MOTOR_LD_H                                0.67e-3f                       // d轴电感(H)
+#define MOTOR_LQ_H                                0.67e-3f                       // q轴电感(H)
 #define MOTOR_PSI_F                               0.0035f                        // 永磁体磁链(Wb)
 #define MOTOR_PHASE_SWAP                          1                              // 1：启用相序翻转
 
@@ -34,7 +34,7 @@
 
 // 电流环控制参数
 #define CURRENT_PID_KP                            5.0f                           // 电流环PI比例系数  带宽1000Hz
-#define CURRENT_PID_KI                            2670.0f                        // 电流环PI积分系数
+#define CURRENT_PID_KI                            1860.5f                        // 电流环PI积分系数
 #define CURRENT_PID_OUT_MIN                       (-U_DC / 2.0f)                 // 电流环输出下限
 #define CURRENT_PID_OUT_MAX                       (U_DC / 2.0f)                  // 电流环输出上限
 
@@ -67,9 +67,22 @@
 #define RES_MEAS_SETTLE_TICKS                     2000U                          // 稳态等待拍数 (200ms @10kHz)
 #define RES_MEAS_SAMPLE_COUNT                     5000U                          // 采样累积拍数 (500ms @10kHz)
 
+// 电感辨识参数，参考 VESC 短脉冲/HFI 辨识的电压幅值和保守缩放策略
+#define IND_MEAS_DUTY                             0.08f                          // VESC 风格辨识 duty，占母线最大 SVPWM 电压比例
+#define IND_MEAS_VOLTAGE                          (IND_MEAS_DUTY * U_DC * MATH_INV_SQRT3) // 等效 αβ 电压幅值(V)
+#define IND_MEAS_PHASE_RESISTANCE                 MOTOR_RS_Ω                     // 相电阻补偿(Ω)
+#define IND_MEAS_TS_S                             (1.0f / FOC_CURRENT_LOOP_FREQ_HZ) // 执行周期(s)
+#define IND_MEAS_RESULT_SCALE                     0.99f                           // VESC 电感结果保守缩放系数
+#define IND_MEAS_MIN_DELTA_CURRENT                0.02f                          // 有效电流增量阈值(A)
+#define IND_MEAS_MAX_ABS_CURRENT                  2.0f                           // 辨识保护电流(A)
+#define IND_MEAS_PULSE_TICKS                      2U                             // 单次电压脉冲持续拍数
+#define IND_MEAS_REST_TICKS                       20U                            // 正负脉冲之间零矢量等待拍数
+#define IND_MEAS_SAMPLE_COUNT                     200U                           // 每个轴正负脉冲对数
+#define IND_MEAS_MEASURE_Q_AXIS                   1U                             // 1: 辨识 Ld/Lq；0: 只辨识 Ld
+
 // MXLEMMING 观测器参数
 #define MXLEMMING_OBSERVER_CURRENT_PID_KP         5.0f                           // 无感模式电流环PI比例系数
-#define MXLEMMING_OBSERVER_CURRENT_PID_KI         2670.0f                        // 无感模式电流环PI积分系数
+#define MXLEMMING_OBSERVER_CURRENT_PID_KI         1860.5f                        // 无感模式电流环PI积分系数
 #define MXLEMMING_OBSERVER_SPEED_PID_KP           0.004f                         // 无感模式速度环PI比例系数
 #define MXLEMMING_OBSERVER_SPEED_PID_KI           2.5f                           // 无感模式速度环PI积分系数
 #define MXLEMMING_OBSERVER_SPEED_PID_OUT_MIN      -0.8f                          // 无感模式速度环输出下限(A)
@@ -82,7 +95,7 @@
 // 无感磁链观测器参数（Ortega）
 #define FLUX_OBSERVER_GAMMA                       2.0e7f                         // 观测器非线性增益
 #define FLUX_OBSERVER_CURRENT_PID_KP              5.0f                           // 无感模式电流环PI比例系数
-#define FLUX_OBSERVER_CURRENT_PID_KI              2670.0f                        // 无感模式电流环PI积分系数
+#define FLUX_OBSERVER_CURRENT_PID_KI              1860.5f                        // 无感模式电流环PI积分系数
 #define FLUX_OBSERVER_SPEED_PID_KP                0.004f                         // 无感模式速度环PI比例系数
 #define FLUX_OBSERVER_SPEED_PID_KI                2.5f                           // 无感模式速度环PI积分系数
 #define FLUX_OBSERVER_SPEED_PID_OUT_MIN           -0.8f                          // 无感模式速度环输出下限(A)
@@ -97,7 +110,7 @@
 #define IMPROVED_FLUX_OBSERVER_GAIN               3.53e7f                         // 观测器幅值搜索增益 λ
 #define IMPROVED_FLUX_OBSERVER_PHASE_GAIN_K       1.0f                           // 正交相位搜索增益 k
 #define IMPROVED_FLUX_OBSERVER_CURRENT_PID_KP     5.0f                           // 无感模式电流环PI比例系数
-#define IMPROVED_FLUX_OBSERVER_CURRENT_PID_KI     2670.0f                        // 无感模式电流环PI积分系数
+#define IMPROVED_FLUX_OBSERVER_CURRENT_PID_KI     1860.5f                        // 无感模式电流环PI积分系数
 #define IMPROVED_FLUX_OBSERVER_SPEED_PID_KP       0.004f                         // 无感模式速度环PI比例系数
 #define IMPROVED_FLUX_OBSERVER_SPEED_PID_KI       2.5f                           // 无感模式速度环PI积分系数
 #define IMPROVED_FLUX_OBSERVER_SPEED_PID_OUT_MIN  -0.8f                          // 无感模式速度环输出下限(A)
