@@ -1,61 +1,30 @@
-# FOC_2804 — 基于 STM32G431 的磁场定向控制（FOC）电机驱动
+# FOC_2804 — STM32G431 FOC 电机驱动
 
-本项目是一款基于 **STM32G431RB** 微控制器的无刷电机（BLDC/PMSM）FOC 驱动方案，支持 **有感电流闭环、有感速度闭环、有感位置闭环、无感速度闭环** 四种运行模式。硬件上使用 **AS5600 磁编码器** 进行转子位置检测，电流采样通过片内 ADC 实现双电阻采样。
-
----
-
-## 主要特性
-
-- **电流环频率**：10 kHz
-- **速度环频率**：1 kHz
-- **位置环频率**：1 kHz
-- **控制模式**：
-  - 有感电流闭环（`currentClosed`）
-  - 有感速度闭环（`speedClosed`）
-  - 无感速度闭环（`fluxObserverClosed`，基于非线性磁链观测器）
-  - 有感位置闭环（`positionClosed`，位置 PID 直接输出 q 轴电流）
-- **调制方式**：零序注入SVPWM
-- **解耦控制**：支持 D/Q 轴前馈解耦
-- **拍延时补偿与角度插值**：针对 AS5600 I2C 通信与 PWM 更新延迟，结合 PLL 估计做电角度前向插值
-- **预测齿槽转矩补偿**：支持离线标定与角度查表前馈补偿
-- **速度环扰动观测器**：集成龙伯格 DOB，支持负载扰动估计与 q 轴电流前馈补偿
-- **弱磁控制**：支持弱磁扩展转速（待完善）
-- **调试输出**：支持 VOFA+ 波形调试
+基于 **STM32G431RB** 的 BLDC/PMSM 磁场定向控制工程。
 
 ---
 
-## 项目结构
+## 目录结构
 
-```
+```text
 FOC_2804/
 ├── User/
-│   ├── app/              # 应用层：main 入口、用户配置
-│   ├── bsp/              # 板级支持包：ADC、GPIO、TIM、USART、I2C、时钟
-│   ├── sensor/           # 传感器驱动：AS5600 编码器、电流采样
-│   ├── alg/              # 基础算法：Clarke/Park 变换、SVPWM、PID
-│   ├── foc/              # FOC 核心：控制对象、环路调度、零点校准、栅极驱动
-│   ├── motor/            # 应用级闭环：电流闭环、速度闭环、位置闭环、无感闭环
-│   ├── adv_alg/          # 高级算法：磁链观测器、弱磁控制、齿槽补偿、龙伯格 DOB
-│   └── utils/            # 工具库：快速三角函数、角度工具、斜坡、FIFO、打印
-├── Drivers/              # STM32 HAL 库及 CMSIS
-├── docs/                 # 调试记录与开发文档
-├── 芯片手册/             # 芯片数据手册与参考手册
-└── STM32G431RBTX_FLASH.ld  # 链接器脚本
+│   ├── app/        # 程序入口与全局配置
+│   ├── bsp/        # ADC、GPIO、TIM、USART、I2C、时钟、AS5600 底层接口
+│   ├── sensor/     # 编码器、电流采样
+│   ├── alg/        # Clarke/Park、PID、SVPWM
+│   ├── foc/        # FOC 控制对象、环路调度、零点对齐、栅极驱动
+│   ├── motor/      # 各运行模式封装
+│   ├── adv_alg/    # 磁链观测器、弱磁、DOB、齿槽补偿、参数辨识
+│   ├── test/       # 外设与同步测试
+│   └── utils/      # 角度、快速三角函数、打印、FIFO、宏工具
+├── Drivers/        # STM32 HAL、CMSIS、启动文件、系统调用
+├── docs/           # 调试记录与开发文档
+│   └── videos/     # 不同运行模式的演示视频
+├── .vscode/        # 调试和任务配置
+├── FOC_2804.code-workspace
+└── STM32G431RBTX_FLASH.ld
 ```
----
-
-## 目录说明
-
-| 目录 | 说明 |
-|------|------|
-| `User/app` | `main.c` 程序入口，`user_config.h` 全局配置 |
-| `User/bsp` | 底层外设初始化：时钟、GPIO、TIM（PWM）、ADC、USART、I2C |
-| `User/sensor` | AS5600 编码器读取、电流采样及转换 |
-| `User/alg` | Clarke/Park 坐标变换、SVPWM、PID 控制器 |
-| `User/foc` | FOC 核心结构体、电流/速度环调度、零点校准、栅极驱动使能 |
-| `User/motor` | 四种应用级闭环控制的封装（电流/速度/位置/无感） |
-| `User/adv_alg` | 磁链观测器（用于无感控制）、弱磁控制、齿槽转矩补偿、龙伯格扰动观测器 |
-| `User/utils` | 快速 sin/cos、角度归一化、斜坡函数、VOFA 打印、FIFO |
 
 ---
 
@@ -63,140 +32,127 @@ FOC_2804/
 
 ### 1. 环境准备
 
-- **IDE**：VS Code + EIDE 插件 + Cortex-Debug 插件
-- **编译器**：GCC
-- **调试器**：OpenOCD
-- **串口助手**：VOFA+
+- VS Code EIDE 插件
+- Cortex-Debug 插件
+- arm-none-eabi-gcc 工具链
+- OpenOCD 或兼容调试器
 
 ### 2. 编译与烧录
 
 1. 使用 VS Code 打开 `FOC_2804.code-workspace`
-2. 在 EIDE 中选择对应的编译器工具链
-3. 点击 **Build** 编译项目
-4. 点击 **Download** 烧录固件
+2. 在 EIDE 中选择对应的 GCC 工具链
+3. 执行 Build
+4. 执行 Download 或通过 Cortex-Debug 烧录调试
 
-### 3. 选择运行模式
+### 3. 切换运行模式
 
-在 `User/app/main.c` 中按需要选择一种运行模式：
+运行模式集中在 `User/app/main.c`。同一时间只保留一个初始化入口和一个调试输出入口。
 
 ```c
-// 电流闭环（仅控制 Id/Iq）
+// 电流闭环
 currentClosed_init(0.0f, 0.5f);
+currentClosedDebug_print_info();
 
-// 速度闭环（有感，编码器提供速度）
-speedClosed_init(3000);
+// 有感速度闭环
+speedClosed_init(2);
+speedClosedDebug_print_info();
 
-// 位置闭环（有感，位置 PID 直接输出 q 轴电流）
+// 有感位置闭环
 positionClosed_init(0.0f);
+positionClosedDebug_print_info();
 
-// 无感速度闭环（磁链观测器）
-fluxObseverClosed_init(30);
-```
+// 弱磁速度闭环
+speedWeakClosed_init(1000);
+speedWeakClosedDebug_print_info();
 
-同时，在 `while(1)` 中选择对应的调试输出：
+// Ortega 无感速度闭环
+fluxObseverClosed_init(500);
+fluxObseverClosedDebug_print_info();
 
-```c
-currentClosedDebug_print_info();       // 电流闭环调试
-speedClosedDebug_print_info();         // 速度闭环调试
-positionClosedDebug_print_info();      // 位置闭环调试
-fluxObseverClosedDebug_print_info();   // 无感闭环调试
+// MXLEMMING 无感速度闭环
+mxlemmingObserverClosed_init(500);
+mxlemmingObserverClosedDebug_print_info();
+
+// 改进非线性磁链观测器无感速度闭环
+improvedFluxObserverClosed_init(20);
+improvedFluxObserverClosedDebug_print_info();
+
+// 电阻辨识
+resistanceMeasureMode_init();
+resistanceMeasureModeDebug_print_info();
+
+// 电感辨识
+inductanceMeasureMode_init();
+inductanceMeasureModeDebug_print_info();
+
+// 齿槽转矩标定
+coggingCalibrationMode_init();
+coggingCalibrationModeDebug_print_info();
 ```
 
 ---
 
-## 参数配置
+## 核心参数
 
-电机与控制参数集中在 `User/app/user_config.h`：
+参数集中在 `User/app/user_config.h`。
 
-| 参数 | 默认值 | 说明 |
+### 电机与采样
+
+| 参数 | 当前值 | 说明 |
 |------|--------|------|
+| `U_DC` | 12.0 V | 直流母线电压 |
 | `MOTOR_POLE_PAIRS` | 7 | 电机极对数 |
-| `MOTOR_RS_Ω` | 1.5 Ω | 定子电阻 |
-| `MOTOR_LD_H` / `MOTOR_LQ_H` | 0.86 mH | D/Q 轴电感 |
+| `MOTOR_RS_Ω` | 1.6 Ω | 定子电阻 |
+| `MOTOR_LD_H` / `MOTOR_LQ_H` | 0.67 mH | d/q 轴电感 |
 | `MOTOR_PSI_F` | 0.0035 Wb | 永磁体磁链 |
-| `FOC_CURRENT_LOOP_FREQ_HZ` | 10000 | 电流环频率 |
-| `FOC_SPEED_LOOP_DIVIDER` | 10 | 速度环分频系数 |
-| `FOC_DECOUPLING_ENABLE` | 0 | 前馈解耦开关 |
+| `MOTOR_PHASE_SWAP` | 1 | 启用相序翻转 |
+| `FOC_CURRENT_LOOP_FREQ_HZ` | 10000 Hz | 电流环频率 |
+| `FOC_SPEED_LOOP_DIVIDER` | 10 | 速度环分频 |
+| `FOC_POSITION_LOOP_DIVIDER` | 10 | 位置环分频 |
 
-### 核心算法说明
+### 编码器与角度补偿
 
-#### 1. 拍延时补偿与角度插值
-
-AS5600 通过 I2C 读取时存在通信与采样延迟，PWM 更新也存在固有拍延时。为减少转子角度滞后对 FOC 定向精度的影响，编码器模块在 `encoder_get_pllAngle()` 中基于 PLL 速度估计做前向角度补偿：
-
-```text
-angle_comp = angle_pll + speed_pll * delay
-```
-
-这类处理本质上是把“当前时刻的角度”前推到“控制真正生效的时刻”，用于减小 Park 变换和 PWM 更新之间的相位误差。
-
-#### 2. 预测齿槽转矩补偿
-
-齿槽转矩会在低速和匀速工况下引入周期性转矩脉动。项目中通过离线标定得到 `raw_count -> iq_comp` 的补偿表，并在运行时按编码器原始计数做线性插值：
-
-```text
-iq_cogging = table(raw_count)
-```
-
-查表值以 q 轴电流形式注入到速度环参考值中，用于抵消周期性机械扰动。这样做的优点是针对性强，且不会把明显周期性的扰动全部留给速度环或 DOB 去处理。
-
-#### 3. 无感速度闭环
-
-无感模式通过磁链观测器替代编码器角度与速度反馈。观测器由定子电压、电流和磁链状态构成，先估计反电动势对应的磁链矢量，再通过 PLL 提取角度与速度：
-
-```text
-xhat_dot = y + correction(eta, s)
-theta_est = atan2(eta_beta, eta_alpha)
-```
-
-其中 `fluxObserver_estimate()` 负责更新磁链状态，`fluxObserver_get_angle()` 和 `fluxObserver_get_speed()` 分别输出平滑角度与速度。无感模式适合在编码器不可用或需要去传感器时使用，但对参数和电压观测质量更敏感。
-
-#### 4. 速度环龙伯格扰动观测器
-
-速度闭环中可通过 `LUENBERGER_DOB_ENABLE` 启用负载扰动前馈补偿。观测器基于机械模型：
-
-```text
-omega_dot = -(B / J) * omega + (Kt / J) * iq + d
-```
-
-其中 `d_hat` 估计的是机械加速度维度的总扰动项，最终换算为 q 轴补偿电流：
-
-```text
-iq_comp = -(J / Kt) * d_hat * comp_gain
-```
-
-它与速度 PI 叠加后共同决定 `target_iq`，用于提升负载突变时的抗扰性能。相关参数位于 `User/app/user_config.h`：
-
-| 参数 | 默认值 | 说明 |
+| 参数 | 当前值 | 说明 |
 |------|--------|------|
-| `LUENBERGER_DOB_ENABLE` | 1 | 速度环负载扰动补偿开关 |
-| `LUENBERGER_DOB_TS_S` | `1 / 10000 * 10` | 观测器执行周期，与速度环周期一致 |
-| `LUENBERGER_DOB_J_KGM2` | `3.7e-6` | 转动惯量，需按实际电机和负载修正 |
-| `LUENBERGER_DOB_B_NM_S_RAD` | `0.0` | 粘性摩擦系数，未知时可先设 0 |
-| `LUENBERGER_DOB_KT_NM_A` | `1.5 * pole_pairs * psi_f` | q 轴转矩常数 |
-| `LUENBERGER_DOB_BANDWIDTH_HZ` | `30.0` | 观测器带宽，越高响应越快但越容易放大测速噪声 |
-| `LUENBERGER_DOB_ZETA` | `1.0` | 观测器阻尼系数 |
-| `LUENBERGER_DOB_COMP_GAIN` | `1.0` | 补偿比例，调试时可从较小值逐步增大 |
-| `LUENBERGER_DOB_IQ_COMP_MAX` | `0.2 * SPEED_PID_OUT_MAX` | q 轴补偿电流限幅 |
+| `ENCODER_COUNT_SWAP` | 0 | 编码器计数方向翻转开关 |
+| `ENCODER_PLL_KP` | 1776.0 | 编码器 PLL 比例增益 |
+| `ENCODER_PLL_KI` | 1.58e6 | 编码器 PLL 积分增益 |
+| `ENCODER_PLL_SPEED_LIMIT_RPM` | 5000 rpm | PLL 速度限幅 |
+| `ENCODER_PLL_ANGLE_COMP_ENABLE` | 1 | 启用拍延时补偿 |
+| `ENCODER_PLL_ANGLE_COMP_DELAY_S` | 1.5e-4 s | 角度前向补偿延时 |
+| `FOC_ELEC_ANGLE_TRIM_RAD` | 0.0 rad | 电角度手动微调 |
 
-在 `speed_closed` 中，DOB 与速度环同周期更新，输出 `dob_iq_comp_temp` 与速度 PI、齿槽补偿共同叠加到 `target_iq`。调试输出末尾包含 `dob_iq_comp_temp`、`dob_d_hat_temp`、`dob_omega_hat_temp`，可用于观察补偿电流、扰动估计和速度估计。
+### 环路控制
 
-#### 5. 位置环参数
-
-位置闭环使用 PID 控制器直接输出 q 轴电流，D 项使用 PLL 速度反馈提供阻尼。相关参数：
-
-| 参数 | 默认值 | 说明 |
+| 参数 | 当前值 | 说明 |
 |------|--------|------|
-| `FOC_POSITION_LOOP_DIVIDER` | 10 | 位置环相对电流环的分频系数 |
-| `POSITION_PID_KP` | 2.5 | 位置环 P 系数 |
-| `POSITION_PID_KI` | 0.15 | 位置环 I 系数，用于消除恒定负载下的稳态误差 |
-| `POSITION_PID_KD` | 0.04 | 位置环 D 系数，使用 PLL 速度反馈提供阻尼 |
-| `POSITION_PID_D_FILTER_ALPHA` | 0.2 | D 项一阶滤波系数，1.0 表示不过滤 |
+| `CURRENT_PID_KP` / `CURRENT_PID_KI` | 5.0 / 1860.5 | 电流环 PI |
+| `CURRENT_PID_OUT_MIN` / `MAX` | ±6 V | 电流环输出限幅 |
+| `SPEED_PID_KP` / `SPEED_PID_KI` | 0.004 / 2.5 | 速度环 PI |
+| `SPEED_PID_OUT_MIN` / `MAX` | ±0.8 A | 速度环输出 q 轴电流限幅 |
+| `POSITION_PID_KP` / `KI` / `KD` | 2.5 / 0.15 / 0.04 | 位置环 PID |
+| `POSITION_PID_D_FILTER_ALPHA` | 0.2 | 位置环 D 项滤波 |
 | `POSITION_PID_OUT_MIN` / `MAX` | ±0.8 A | 位置环输出 q 轴电流限幅 |
+| `FOC_DECOUPLING_ENABLE` | 0 | D/Q 轴前馈解耦开关 |
+
+### 高级功能
+
+| 功能 | 关键参数 | 当前状态 |
+|------|----------|----------|
+| 龙伯格扰动观测器 | `LUENBERGER_DOB_*` | 默认启用，补偿限幅为 `0.2 * SPEED_PID_OUT_MAX` |
+| 齿槽转矩补偿 | `COGGING_COMP_*` | 默认关闭 |
+| 齿槽离线标定 | `COGGING_CALIB_*` | 默认不编译标定代码 |
+| 电阻辨识 | `RES_MEAS_*` | 独立运行模式 |
+| 电感辨识 | `IND_MEAS_*` | 独立运行模式 |
+| 弱磁控制(有 bug，待完善) | `FLUX_WEAK_*` | 已接入弱磁速度闭环 |
 
 ---
 
+## 运行效果视频
+
+
+---
 ## 开发计划
 
-完善弱磁控制
-开发直接转矩控制（DTC）
+- 完善弱磁控制
+- 开发直接转矩控制（DTC）
