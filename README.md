@@ -149,7 +149,18 @@ coggingCalibrationModeDebug_print_info();
 ---
 
 ## 运行效果视频
+### 齿槽效应补偿算法
+齿槽效应（目标转速10rpm）
 
+https://github.com/user-attachments/assets/db26073c-5752-4def-a1f4-59e05cbd047d
+
+查表法补偿（目标转速10rpm），查表法在极低速工况（<10rpm）效果逐渐变差，此时建议使用DOB法
+
+https://github.com/user-attachments/assets/0f77154e-731e-496c-a0ff-0f5f48df4405
+
+DOB法补偿（目标转速2rpm）
+
+https://github.com/user-attachments/assets/4ffed024-4b17-43ef-866f-8e8d5393e274
 
 ---
 ## 开发计划
