@@ -12,4 +12,6 @@ CompileFlags:
 Diagnostics:
   UnusedIncludes: None
   MissingIncludes: None
-  Suppress: [unused-includes, missing-includes]
+  Suppress:
+    - unused-includes
+    - missing-includes
