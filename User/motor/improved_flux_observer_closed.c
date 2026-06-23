@@ -29,8 +29,8 @@ static float speed_encoder_temp = 0.0f;
 static float speed_obs_temp = 0.0f;
 static float angle_encoder_temp = 0.0f;
 static float angle_obs_temp = 0.0f;
-static float flux_angle_temp = 0.0f;
-static float flux_linkage_temp = 0.0f;
+static float id_temp = 0.0f;
+static float iq_temp = 0.0f;
 
 static void improvedFlux_closed_callback(void)
 {
@@ -71,9 +71,8 @@ static void improvedFlux_closed_callback(void)
     speed_obs_temp = speed_feedback;
     angle_encoder_temp = angle_encoder;
     angle_obs_temp = angle_el;
-    flux_angle_temp = wrap_neg_pi_to_pi(improved_observer.theta_est);
-    flux_linkage_temp = sqrtf(improved_observer.psi_r_alpha * improved_observer.psi_r_alpha +
-                              improved_observer.psi_r_beta * improved_observer.psi_r_beta);
+    id_temp = i_dq.d;
+    iq_temp = i_dq.q;
 }
 
 void improvedFluxObserverClosed_init(float speed_rpm)
@@ -100,8 +99,7 @@ void improvedFluxObserverClosedDebug_print_info(void)
 {
     float angle_encoder_deg = wrap_0_2pi(angle_encoder_temp) * 57.2958f;
     float angle_obs_deg = wrap_0_2pi(angle_obs_temp) * 57.2958f;
-    float flux_angle_deg = wrap_0_2pi(flux_angle_temp) * 57.2958f;
 
-    float data[6] = {speed_encoder_temp, speed_obs_temp, angle_encoder_deg, angle_obs_deg, flux_angle_deg, flux_linkage_temp};
+    float data[6] = {speed_encoder_temp, speed_obs_temp, angle_encoder_deg, angle_obs_deg, id_temp, iq_temp};
     vofa_send(data, 6);
 }
