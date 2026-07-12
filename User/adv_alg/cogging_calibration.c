@@ -25,8 +25,7 @@
  * 当前表大小为 512，编码器单圈为 4096 count，因此每个表项覆盖 8 个 raw count。
  * 使用 raw count 建表可以让后续运行时补偿直接按编码器位置查表，避免受标定起点浮点角度误差影响。
  */
-static uint16_t coggingCalib_rawCountToIndex(uint16_t raw_count)
-{
+static uint16_t coggingCalib_rawCountToIndex(uint16_t raw_count) {
     /* NOTE: 必须先乘后除。若先除法会因整数截断导致精度全部丢失（raw_count/4096 恒为 0）。
      * 乘法最大值为 4095 * TABLE_SIZE，会超过 16 位范围，因此中间运算必须用 32 位避免溢出。
      */
@@ -40,8 +39,7 @@ static uint16_t coggingCalib_rawCountToIndex(uint16_t raw_count)
  * @param index 补偿表索引
  * @return 该索引对应的编码器 raw count 网格点
  */
-static uint16_t coggingCalib_indexToRawCount(uint16_t index)
-{
+static uint16_t coggingCalib_indexToRawCount(uint16_t index) {
     return (uint16_t)(((uint32_t)index * 4096UL) / (uint32_t)COGGING_CALIB_TABLE_SIZE);
 }
 
@@ -51,18 +49,15 @@ static uint16_t coggingCalib_indexToRawCount(uint16_t index)
  * @return 下一个有效 bin；如果整表都没有有效点，则返回 start_index
  * @note 这个函数用于定位空bin两侧的bin，用来插值补全整张表，确保运行时每个位置都有补偿值可用。
  */
-static uint16_t coggingCalib_nextValidIndex(cogging_calib_t *handle, uint16_t start_index)
-{
+static uint16_t coggingCalib_nextValidIndex(cogging_calib_t *handle, uint16_t start_index) {
     uint16_t offset;
 
-    for (offset = 1U; offset <= COGGING_CALIB_TABLE_SIZE; ++offset)
-    {
+    for (offset = 1U; offset <= COGGING_CALIB_TABLE_SIZE; ++offset) {
         // 计算环形索引
         uint16_t idx = (start_index + offset) % COGGING_CALIB_TABLE_SIZE;
 
         // 大于0表示该bin内已有采样值
-        if (handle->raw_count_accum[idx] > 0UL)
-        {
+        if (handle->raw_count_accum[idx] > 0UL) {
             return idx;
         }
     }
@@ -76,18 +71,15 @@ static uint16_t coggingCalib_nextValidIndex(cogging_calib_t *handle, uint16_t st
  * @return 上一个有效 bin；如果整表都没有有效点，则返回 start_index
  * @note 这个函数用于定位空bin两侧的bin，用来插值补全整张表，确保运行时每个位置都有补偿值可用。
  */
-static uint16_t coggingCalib_prevValidIndex(cogging_calib_t *handle, uint16_t start_index)
-{
+static uint16_t coggingCalib_prevValidIndex(cogging_calib_t *handle, uint16_t start_index) {
     uint16_t offset;
 
-    for (offset = 1U; offset <= COGGING_CALIB_TABLE_SIZE; ++offset)
-    {
+    for (offset = 1U; offset <= COGGING_CALIB_TABLE_SIZE; ++offset) {
         // 计算环形索引
         uint16_t idx = (uint16_t)((start_index + COGGING_CALIB_TABLE_SIZE - offset) % COGGING_CALIB_TABLE_SIZE);
 
         // 大于0表示该bin内已有采样值
-        if (handle->raw_count_accum[idx] > 0UL)
-        {
+        if (handle->raw_count_accum[idx] > 0UL) {
             return idx;
         }
     }
@@ -105,8 +97,7 @@ static uint16_t coggingCalib_prevValidIndex(cogging_calib_t *handle, uint16_t st
  * 因此某些 raw count bin 可能没有采样值。这里使用前后最近有效 bin 的平均 iq 做线性插值，
  * 并按机械一圈周期处理 0 与末尾索引的连接关系。
  */
-static float coggingCalib_interpMissingIq(cogging_calib_t *handle, uint16_t index)
-{
+static float coggingCalib_interpMissingIq(cogging_calib_t *handle, uint16_t index) {
     // 查找相邻的非空bin，用于插值计算
     uint16_t prev_idx = coggingCalib_prevValidIndex(handle, index);
     uint16_t next_idx = coggingCalib_nextValidIndex(handle, index);
@@ -136,8 +127,7 @@ static float coggingCalib_interpMissingIq(cogging_calib_t *handle, uint16_t inde
  * 而是按转子实际停稳位置 raw_count 映射到固定 bin。多圈重复采样时，
  * 同一个 bin 可能被命中多次，所以分别累计命中次数和 iq 总和，最终建表时再求平均。
  */
-static void coggingCalib_recordSample(cogging_calib_t *handle, uint16_t raw_count, float measured_iq)
-{
+static void coggingCalib_recordSample(cogging_calib_t *handle, uint16_t raw_count, float measured_iq) {
     uint16_t sample_idx = coggingCalib_rawCountToIndex(raw_count);
 
     handle->raw_count_accum[sample_idx] += 1U;
@@ -153,21 +143,16 @@ static void coggingCalib_recordSample(cogging_calib_t *handle, uint16_t raw_coun
  * - 如果没有直接采样，使用前后最近有效 bin 做环形线性插值；
  * - 最后减去整表平均值，去掉恒定 q 轴电流偏置，只保留随机械角变化的周期性补偿量。
  */
-static void coggingCalib_buildFinalTable(cogging_calib_t *handle)
-{
+static void coggingCalib_buildFinalTable(cogging_calib_t *handle) {
     uint16_t table_idx;
-    float iq_mean = 0.0f;
+    float    iq_mean = 0.0f;
 
-    for (table_idx = 0U; table_idx < COGGING_CALIB_TABLE_SIZE; table_idx++)
-    {
+    for (table_idx = 0U; table_idx < COGGING_CALIB_TABLE_SIZE; table_idx++) {
         handle->raw_count_table[table_idx] = coggingCalib_indexToRawCount(table_idx);
 
-        if (handle->raw_count_accum[table_idx] > 0UL)
-        {
+        if (handle->raw_count_accum[table_idx] > 0UL) {
             handle->iq_comp_table[table_idx] = handle->iq_comp_accum[table_idx] / (float)handle->raw_count_accum[table_idx];
-        }
-        else
-        {
+        } else {
             handle->iq_comp_table[table_idx] = coggingCalib_interpMissingIq(handle, table_idx);
         }
 
@@ -175,8 +160,7 @@ static void coggingCalib_buildFinalTable(cogging_calib_t *handle)
     }
 
     iq_mean /= (float)COGGING_CALIB_TABLE_SIZE;
-    for (table_idx = 0U; table_idx < COGGING_CALIB_TABLE_SIZE; table_idx++)
-    {
+    for (table_idx = 0U; table_idx < COGGING_CALIB_TABLE_SIZE; table_idx++) {
         handle->iq_comp_table[table_idx] -= iq_mean;
     }
 }
@@ -189,8 +173,7 @@ static void coggingCalib_buildFinalTable(cogging_calib_t *handle)
  *       start_angle_rad 会被归一化到 0~2π。
  *       标定本身不依赖外部位置环，而是使用 handle 内部的 PD 直接生成 q 轴目标电流。
  */
-void coggingCalib_init(cogging_calib_t *handle, float start_angle_rad)
-{
+void coggingCalib_init(cogging_calib_t *handle, float start_angle_rad) {
     // 清空句柄数据
     memset(handle, 0, sizeof(*handle));
 
@@ -206,14 +189,7 @@ void coggingCalib_init(cogging_calib_t *handle, float start_angle_rad)
     handle->state = COGGING_CALIB_STATE_SETTLING;
 
     // 标定过程内部使用的位置 PD，只负责把转子拉到每个采样机械角
-    pid_init(&handle->position_pd,
-             PID_MODE_PD,
-             COGGING_CALIB_POSITION_KP,
-             0.0f,
-             COGGING_CALIB_POSITION_KD,
-             COGGING_CALIB_POSITION_OUT_MIN,
-             COGGING_CALIB_POSITION_OUT_MAX,
-             PID_LIMIT_DISABLE);
+    pid_init(&handle->position_pd, PID_MODE_PD, COGGING_CALIB_POSITION_KP, 0.0f, COGGING_CALIB_POSITION_KD, COGGING_CALIB_POSITION_OUT_MIN, COGGING_CALIB_POSITION_OUT_MAX, PID_LIMIT_DISABLE);
 }
 
 /**
@@ -232,11 +208,9 @@ void coggingCalib_init(cogging_calib_t *handle, float start_angle_rad)
  *       4) 将当前 measured_iq 按 raw_count 写入固定补偿表 bin；
  *       5) 完成一圈后重复采样，达到重复次数后生成最终零均值补偿表。
  */
-uint8_t coggingCalib_update(cogging_calib_t *handle, float mech_angle_rad, uint16_t raw_count, float mech_speed_rpm, float measured_iq, float *target_iq)
-{
+uint8_t coggingCalib_update(cogging_calib_t *handle, float mech_angle_rad, uint16_t raw_count, float mech_speed_rpm, float measured_iq, float *target_iq) {
     // 标定完成后不再产生保持电流，调用方可据此退出标定模式
-    if (handle->finished != 0U)
-    {
+    if (handle->finished != 0U) {
         *target_iq = 0.0f;
         return 1U;
     }
@@ -268,8 +242,7 @@ uint8_t coggingCalib_update(cogging_calib_t *handle, float mech_angle_rad, uint1
 
     // 速度超限时说明转子仍处于动态过程，不能把当前 measured_iq 当作静态保持电流
     // 清零 tick_count，要求当前目标点重新经历完整的连续低速稳定时间
-    if (fabsf(mech_speed_rpm) > COGGING_CALIB_MAX_MECH_SPEED_RPM)
-    {
+    if (fabsf(mech_speed_rpm) > COGGING_CALIB_MAX_MECH_SPEED_RPM) {
         handle->tick_count = 0U;
         return 0U;
     }
@@ -278,23 +251,20 @@ uint8_t coggingCalib_update(cogging_calib_t *handle, float mech_angle_rad, uint1
     handle->tick_count++;
 
     // 低速稳定时间达标后，认为 measured_iq 可近似作为该 raw 位置的静态保持电流样本
-    if (handle->tick_count >= COGGING_CALIB_SETTLE_TICKS)
-    {
+    if (handle->tick_count >= COGGING_CALIB_SETTLE_TICKS) {
         coggingCalib_recordSample(handle, raw_count, measured_iq);
         handle->index++;
         handle->tick_count = 0U;
 
         // 当前圈还没采完：推进到下一个均匀机械角目标，下一周期重新等待稳定
-        if (handle->index < COGGING_CALIB_TABLE_SIZE)
-        {
+        if (handle->index < COGGING_CALIB_TABLE_SIZE) {
             handle->target_angle_rad = wrap_0_2pi(handle->start_angle_rad + (MATH_TWO_PI / (float)COGGING_CALIB_TABLE_SIZE) * (float)handle->index);
             return 0U;
         }
 
         // 当前机械一圈已经采完，开始统计重复采样圈数
         handle->repeat_count++;
-        if (handle->repeat_count < COGGING_CALIB_REPEAT_COUNT)
-        {
+        if (handle->repeat_count < COGGING_CALIB_REPEAT_COUNT) {
             handle->index = 0U;
             handle->target_angle_rad = handle->start_angle_rad;
             return 0U;
@@ -325,10 +295,8 @@ uint8_t coggingCalib_update(cogging_calib_t *handle, float mech_angle_rad, uint1
  *       data[4] = 最近一次写入补偿表的编码器原始计数 raw_count_table[index-1]
  *       data[5] = 最近一次写入补偿表的补偿 iq iq_comp_table[index-1]
  */
-void coggingCalib_getDebugData(cogging_calib_t *handle, float *data, uint16_t *len)
-{
-    if ((handle == NULL) || (data == NULL) || (len == NULL))
-    {
+void coggingCalib_getDebugData(cogging_calib_t *handle, float *data, uint16_t *len) {
+    if ((handle == NULL) || (data == NULL) || (len == NULL)) {
         return;
     }
 
@@ -340,23 +308,17 @@ void coggingCalib_getDebugData(cogging_calib_t *handle, float *data, uint16_t *l
     // 调试输出需要兼容标定中和标定完成两种状态：
     // - 标定中：raw_count_table/iq_comp_table 尚未最终生成，只能从累加 bin 中读取临时均值；
     // - 标定完成：直接读取最终补偿表。
-    if ((handle->index > 0U) && (handle->index <= COGGING_CALIB_TABLE_SIZE))
-    {
-        if (handle->finished != 0U)
-        {
+    if ((handle->index > 0U) && (handle->index <= COGGING_CALIB_TABLE_SIZE)) {
+        if (handle->finished != 0U) {
             data[4] = (float)handle->raw_count_table[handle->index - 1U];
             data[5] = handle->iq_comp_table[handle->index - 1U];
-        }
-        else
-        {
+        } else {
             // 标定进行中时，index-1 表示最近完成的目标点；这里换算到固定 raw bin 后读取临时平均值
             uint16_t debug_idx = coggingCalib_rawCountToIndex((uint16_t)(((uint32_t)(handle->index - 1U) * 4096UL) / (uint32_t)COGGING_CALIB_TABLE_SIZE));
             data[4] = (float)coggingCalib_indexToRawCount(debug_idx);
             data[5] = (handle->raw_count_accum[debug_idx] > 0UL) ? (handle->iq_comp_accum[debug_idx] / (float)handle->raw_count_accum[debug_idx]) : 0.0f;
         }
-    }
-    else
-    {
+    } else {
         data[4] = 0.0f;
         data[5] = 0.0f;
     }
@@ -369,10 +331,8 @@ void coggingCalib_getDebugData(cogging_calib_t *handle, float *data, uint16_t *l
  * @param handle 齿槽标定句柄
  * @return 1 表示完成；0 表示未完成或句柄无效
  */
-uint8_t coggingCalib_isFinished(cogging_calib_t *handle)
-{
-    if (handle == NULL)
-    {
+uint8_t coggingCalib_isFinished(cogging_calib_t *handle) {
+    if (handle == NULL) {
         return 0U;
     }
 
@@ -383,8 +343,7 @@ uint8_t coggingCalib_isFinished(cogging_calib_t *handle)
  * @brief 获取齿槽补偿表长度
  * @return 补偿表点数
  */
-uint16_t coggingCalib_getTableSize(void)
-{
+uint16_t coggingCalib_getTableSize(void) {
     return COGGING_CALIB_TABLE_SIZE;
 }
 
@@ -394,10 +353,8 @@ uint16_t coggingCalib_getTableSize(void)
  * @param index 补偿表索引
  * @return 对应 raw count；索引越界或句柄无效时返回 0
  */
-uint16_t coggingCalib_getRawCountByIndex(cogging_calib_t *handle, uint16_t index)
-{
-    if ((handle == NULL) || (index >= COGGING_CALIB_TABLE_SIZE))
-    {
+uint16_t coggingCalib_getRawCountByIndex(cogging_calib_t *handle, uint16_t index) {
+    if ((handle == NULL) || (index >= COGGING_CALIB_TABLE_SIZE)) {
         return 0U;
     }
 
@@ -410,10 +367,8 @@ uint16_t coggingCalib_getRawCountByIndex(cogging_calib_t *handle, uint16_t index
  * @param index 补偿表索引
  * @return q 轴补偿电流(A)；索引越界或句柄无效时返回 0
  */
-float coggingCalib_getIqCompByIndex(cogging_calib_t *handle, uint16_t index)
-{
-    if ((handle == NULL) || (index >= COGGING_CALIB_TABLE_SIZE))
-    {
+float coggingCalib_getIqCompByIndex(cogging_calib_t *handle, uint16_t index) {
+    if ((handle == NULL) || (index >= COGGING_CALIB_TABLE_SIZE)) {
         return 0.0f;
     }
 

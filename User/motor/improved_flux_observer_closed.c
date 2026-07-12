@@ -32,8 +32,7 @@ static float angle_obs_temp = 0.0f;
 static float id_temp = 0.0f;
 static float iq_temp = 0.0f;
 
-static void improvedFlux_closed_callback(void)
-{
+static void improvedFlux_closed_callback(void) {
     encoder_update();
 
     // 电流采样
@@ -61,8 +60,7 @@ static void improvedFlux_closed_callback(void)
     loopControl_run_speedLoop(&foc_improvedFlux_handle, i_dq, angle_el, speed_feedback, FOC_SPEED_LOOP_DIVIDER);
 
     // 将输出电压写回观测器供下一拍使用
-    alphabeta_t u_alphabeta = ipark_transform(
-        (dq_t){.d = foc_improvedFlux_handle.v_d_out, .q = foc_improvedFlux_handle.v_q_out}, angle_el);
+    alphabeta_t u_alphabeta = ipark_transform((dq_t){.d = foc_improvedFlux_handle.v_d_out, .q = foc_improvedFlux_handle.v_q_out}, angle_el);
     improved_observer.u_alpha = u_alphabeta.alpha;
     improved_observer.u_beta = u_alphabeta.beta;
 
@@ -75,11 +73,11 @@ static void improvedFlux_closed_callback(void)
     iq_temp = i_dq.q;
 }
 
-void improvedFluxObserverClosed_init(float speed_rpm)
-{
+void improvedFluxObserverClosed_init(float speed_rpm) {
     pid_init(&pid_id, PID_MODE_PI, IMPROVED_FLUX_OBSERVER_CURRENT_PID_KP, IMPROVED_FLUX_OBSERVER_CURRENT_PID_KI, 0.0f, -U_DC / 2.0f, U_DC / 2.0f, PID_LIMIT_DISABLE);
     pid_init(&pid_iq, PID_MODE_PI, IMPROVED_FLUX_OBSERVER_CURRENT_PID_KP, IMPROVED_FLUX_OBSERVER_CURRENT_PID_KI, 0.0f, -U_DC / 2.0f, U_DC / 2.0f, PID_LIMIT_DISABLE);
-    pid_init(&pid_speed, PID_MODE_PI, IMPROVED_FLUX_OBSERVER_SPEED_PID_KP, IMPROVED_FLUX_OBSERVER_SPEED_PID_KI, 0.0f, IMPROVED_FLUX_OBSERVER_SPEED_PID_OUT_MIN, IMPROVED_FLUX_OBSERVER_SPEED_PID_OUT_MAX, PID_LIMIT_ENABLE);
+    pid_init(&pid_speed, PID_MODE_PI, IMPROVED_FLUX_OBSERVER_SPEED_PID_KP, IMPROVED_FLUX_OBSERVER_SPEED_PID_KI, 0.0f, IMPROVED_FLUX_OBSERVER_SPEED_PID_OUT_MIN,
+             IMPROVED_FLUX_OBSERVER_SPEED_PID_OUT_MAX, PID_LIMIT_ENABLE);
 
     foc_init(&foc_improvedFlux_handle, &pid_id, &pid_iq, &pid_speed);
     foc_set_id(&foc_improvedFlux_handle, 0.0f);
@@ -95,8 +93,7 @@ void improvedFluxObserverClosed_init(float speed_rpm)
     adc_register_injectedCallback(improvedFlux_closed_callback);
 }
 
-void improvedFluxObserverClosedDebug_print_info(void)
-{
+void improvedFluxObserverClosedDebug_print_info(void) {
     float angle_encoder_deg = wrap_0_2pi(angle_encoder_temp) * 57.2958f;
     float angle_obs_deg = wrap_0_2pi(angle_obs_temp) * 57.2958f;
 

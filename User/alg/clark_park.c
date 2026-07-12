@@ -1,7 +1,6 @@
 #include "clark_park.h"
 
-alphabeta_t clark_transform(abc_t abc)
-{
+alphabeta_t clark_transform(abc_t abc) {
     alphabeta_t alpha_beta;
 
     // iα = Ia
@@ -13,8 +12,7 @@ alphabeta_t clark_transform(abc_t abc)
     return alpha_beta;
 }
 
-abc_t iclark_transform(alphabeta_t alpha_beta)
-{
+abc_t iclark_transform(alphabeta_t alpha_beta) {
     abc_t abc;
 
     // Ia = iα
@@ -29,8 +27,7 @@ abc_t iclark_transform(alphabeta_t alpha_beta)
     return abc;
 }
 
-dq_t park_transform(alphabeta_t alpha_beta, float theta)
-{
+dq_t park_transform(alphabeta_t alpha_beta, float theta) {
     dq_t dq;
 
     float sin_theta, cos_theta;
@@ -47,8 +44,7 @@ dq_t park_transform(alphabeta_t alpha_beta, float theta)
     return dq;
 }
 
-alphabeta_t ipark_transform(dq_t dq, float theta)
-{
+alphabeta_t ipark_transform(dq_t dq, float theta) {
     alphabeta_t alpha_beta;
 
     float sin_theta, cos_theta;

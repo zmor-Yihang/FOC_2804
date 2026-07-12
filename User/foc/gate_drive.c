@@ -5,8 +5,7 @@
  * @param voltage_alphabeta 2D 电压矢量 (alpha-beta 坐标系)
  * @return 三相占空比
  */
-abc_t gateDrive_set_voltage(alphabeta_t voltage_alphabeta)
-{
+abc_t gateDrive_set_voltage(alphabeta_t voltage_alphabeta) {
     // 电压矢量 -> SVPWM 占空比
     abc_t duty_cycle = svpwm_update(voltage_alphabeta);
 
@@ -20,8 +19,7 @@ abc_t gateDrive_set_voltage(alphabeta_t voltage_alphabeta)
  * @brief 停止输出
  * @return 三相占空比
  */
-abc_t gateDrive_stop(void)
-{
+abc_t gateDrive_stop(void) {
     // 50% 占空比使三相桥臂回到中点，避免继续施加电压矢量
     abc_t duty_cycle = {.a = 0.5f, .b = 0.5f, .c = 0.5f};
 

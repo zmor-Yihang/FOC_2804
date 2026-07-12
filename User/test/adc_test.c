@@ -1,17 +1,13 @@
 #include "adc_test.h"
 
-
-
-void adc_test_init(void)
-{
+void adc_test_init(void) {
     adc_init();
 }
 
-void adc_test_poll(void)
-{
-    abc_t phase_current;
+void adc_test_poll(void) {
+    abc_t                  phase_current;
     current_sense_offset_t current_offset;
-    float debug_data[5];
+    float                  debug_data[5];
 
     currentSenseDebug_get_regularValue(&phase_current);
     currentSenseDebug_get_offset(&current_offset);

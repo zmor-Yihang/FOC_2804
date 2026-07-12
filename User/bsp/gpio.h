@@ -11,5 +11,4 @@ void gpio_init(void);
 void gpio_m1_enable(void);
 void gpio_m1_disable(void);
 
-
 #endif /* __GPIO_H__ */

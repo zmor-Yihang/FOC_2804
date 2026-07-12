@@ -6,10 +6,10 @@
 #if (COGGING_CALIB_ENABLE != 0U)
 
 #include "../foc/foc.h"
-#include "../sensor/encoder.h"
 #include "../sensor/current_sense.h"
-#include "../utils/print.h"
+#include "../sensor/encoder.h"
 #include "../utils/angle_utils.h"
+#include "../utils/print.h"
 
 /**
  * @brief 初始化齿槽转矩标定模式

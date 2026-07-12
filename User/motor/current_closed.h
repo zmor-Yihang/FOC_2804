@@ -3,12 +3,11 @@
 
 #include "../bsp/gpio.h"
 #include "../foc/foc.h"
-#include "../sensor/encoder.h"
 #include "../sensor/current_sense.h"
+#include "../sensor/encoder.h"
 #include "../utils/print.h"
 
 void currentClosed_init(float id, float iq);
 void currentClosedDebug_print_info(void);
-
 
 #endif /*__CURRENT_CLOSED_H__*/

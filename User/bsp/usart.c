@@ -5,37 +5,31 @@ _fff_declare(uint8_t, fifo_uart_tx, FIFO_UART_TX_SIZE); // 声明FIFO发送缓�
 _fff_init(fifo_uart_tx);                                // 初始化FIFO
 
 /* DMA发送临时缓冲区 */
-static uint8_t tx_dma_buf[TX_DMA_BUF_SIZE];
-static volatile uint8_t tx_dma_busy = 0;
+static uint8_t           tx_dma_buf[TX_DMA_BUF_SIZE];
+static volatile uint8_t  tx_dma_busy = 0;
 static volatile uint32_t tx_overflow_count = 0; // 溢出计数器
 
 /* 启动DMA发送 */
-static void usart2_start_dma_tx(void)
-{
-    if (tx_dma_busy || _fff_is_empty(fifo_uart_tx))
-    {
+static void usart2_start_dma_tx(void) {
+    if (tx_dma_busy || _fff_is_empty(fifo_uart_tx)) {
         return; /* DMA忙或FIFO空，直接返回 */
     }
 
     /* 从FIFO读取数据到DMA缓冲区 */
     uint16_t len = 0;
-    while (len < sizeof(tx_dma_buf) && !_fff_is_empty(fifo_uart_tx))
-    {
+    while (len < sizeof(tx_dma_buf) && !_fff_is_empty(fifo_uart_tx)) {
         tx_dma_buf[len++] = _fff_read(fifo_uart_tx);
     }
 
-    if (len > 0)
-    {
+    if (len > 0) {
         tx_dma_busy = 1;
         HAL_UART_Transmit_DMA(&huart2, tx_dma_buf, len);
     }
 }
 
 /* DMA发送完成回调 */
-void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
-{
-    if (huart->Instance == USART2)
-    {
+void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart) {
+    if (huart->Instance == USART2) {
         tx_dma_busy = 0;
 
         /* 如果FIFO还有数据，继续发送 */
@@ -43,22 +37,17 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
     }
 }
 
-int __io_putchar(int ch)
-{
+int __io_putchar(int ch) {
     /* 检查FIFO是否满，触发DMA发送 */
-    if (_fff_mem_level(fifo_uart_tx) >= (FIFO_UART_TX_SIZE))
-    {
-        if (!tx_dma_busy)
-        {
+    if (_fff_mem_level(fifo_uart_tx) >= (FIFO_UART_TX_SIZE)) {
+        if (!tx_dma_busy) {
             usart2_start_dma_tx();
         }
     }
 
     /* FIFO满时阻塞等待，保证数据不截断 */
-    while (_fff_is_full(fifo_uart_tx))
-    {
-        if (!tx_dma_busy)
-        {
+    while (_fff_is_full(fifo_uart_tx)) {
+        if (!tx_dma_busy) {
             usart2_start_dma_tx(); /* 尝试腾出空间 */
         }
     }
@@ -67,19 +56,16 @@ int __io_putchar(int ch)
     _fff_write(fifo_uart_tx, (uint8_t)ch);
 
     /* DMA空闲且有数据，立即启动发送 */
-    if (!tx_dma_busy && !_fff_is_empty(fifo_uart_tx))
-    {
+    if (!tx_dma_busy && !_fff_is_empty(fifo_uart_tx)) {
         usart2_start_dma_tx();
     }
 
     return ch;
 }
 
-int _write(int file, char *ptr, int len)
-{
+int _write(int file, char *ptr, int len) {
     int i;
-    for (i = 0; i < len; i++)
-    {
+    for (i = 0; i < len; i++) {
         __io_putchar(*ptr++);
     }
     return len;
@@ -87,21 +73,20 @@ int _write(int file, char *ptr, int len)
 /*------------------------------------------------------------*/
 
 /* 定义句柄 */
-UART_HandleTypeDef huart2;        /* 声明UART2句柄，用于HAL库操作USART2 */
-DMA_HandleTypeDef hdma_usart2_rx; /* 声明USART2接收DMA句柄 */
-DMA_HandleTypeDef hdma_usart2_tx; /* 声明USART2发送DMA句柄 */
+UART_HandleTypeDef huart2;         /* 声明UART2句柄，用于HAL库操作USART2 */
+DMA_HandleTypeDef  hdma_usart2_rx; /* 声明USART2接收DMA句柄 */
+DMA_HandleTypeDef  hdma_usart2_tx; /* 声明USART2发送DMA句柄 */
 
 /* 接收缓冲区 */
-uint8_t rx_buf_temp[RX_BUF_TEMP_SIZE]; /* 临时接收缓冲区 */
-volatile uint16_t rx_size = 0;         /* 一次接收到的数据长度 */
+uint8_t           rx_buf_temp[RX_BUF_TEMP_SIZE]; /* 临时接收缓冲区 */
+volatile uint16_t rx_size = 0;                   /* 一次接收到的数据长度 */
 
 static uint16_t last_dma_pos = 0; /* 上次DMA位置，用于计算增量 */
 
 _fff_declare(uint8_t, fifo_uart_rx, FIFO_UART_RX_SIZE); // 声明FIFO接收缓冲区
 _fff_init(fifo_uart_rx);                                // 初始化FIFO
 
-void usart_init(void)
-{
+void usart_init(void) {
     GPIO_InitTypeDef gpio_init_struct = {0}; /* GPIO初始化结构体 */
 
     /* 使能USART2、GPIOA、DMA1时钟 */
@@ -183,8 +168,7 @@ void usart_init(void)
 }
 
 /* 发送数据函数 */
-void usart_send_data(uint8_t *data, uint16_t size)
-{
+void usart_send_data(uint8_t *data, uint16_t size) {
     /* 等待上一次DMA发送完成，避免冲突 */
     while (huart2.gState != HAL_UART_STATE_READY)
         ;
@@ -192,54 +176,43 @@ void usart_send_data(uint8_t *data, uint16_t size)
 }
 
 /* 从FIFO读取指定数量的数据 */
-uint16_t usart_read_data(uint8_t *buf, uint16_t max_size)
-{
+uint16_t usart_read_data(uint8_t *buf, uint16_t max_size) {
     uint16_t i;
-    for (i = 0; i < max_size && !_fff_is_empty(fifo_uart_rx); i++)
-    {
+    for (i = 0; i < max_size && !_fff_is_empty(fifo_uart_rx); i++) {
         buf[i] = _fff_read(fifo_uart_rx);
     }
     return i; /* 返回实际读取的字节数 */
 }
 
 /* 获取 fifo_uart_rx 中剩余空间 */
-uint16_t usart_get_availableBuffer(void)
-{
+uint16_t usart_get_availableBuffer(void) {
     return _fff_mem_free(fifo_uart_rx);
 }
 
 /* 检查接收FIFO是否为空, 0表示非空，非0表示空 */
-uint8_t usart_is_rxFifoEmpty(void)
-{
+uint8_t usart_is_rxFifoEmpty(void) {
     return _fff_is_empty(fifo_uart_rx);
 }
 
 /* UART2中断服务函数 */
-void USART2_IRQHandler(void)
-{
+void USART2_IRQHandler(void) {
     /* 判断是否为IDLE中断（空闲线） */
-    if (__HAL_UART_GET_FLAG(&huart2, UART_FLAG_IDLE) != RESET)
-    {
+    if (__HAL_UART_GET_FLAG(&huart2, UART_FLAG_IDLE) != RESET) {
         __HAL_UART_CLEAR_IDLEFLAG(&huart2); /* 清除IDLE中断标志 */
 
         /* 计算当前DMA位置 */
         uint16_t curr_dma_pos = RX_BUF_TEMP_SIZE - __HAL_DMA_GET_COUNTER(&hdma_usart2_rx);
 
-        if (curr_dma_pos != last_dma_pos)
-        {
-            if (curr_dma_pos > last_dma_pos)
-            {
+        if (curr_dma_pos != last_dma_pos) {
+            if (curr_dma_pos > last_dma_pos) {
                 /* 正常情况：新数据在 last_dma_pos 到 curr_dma_pos 之间 */
                 rx_size = curr_dma_pos - last_dma_pos;
                 _fff_write_multiple(fifo_uart_rx, &rx_buf_temp[last_dma_pos], rx_size);
-            }
-            else
-            {
+            } else {
                 /* DMA环绕：先写 last_dma_pos 到末尾，再写开头到 curr_dma_pos */
                 rx_size = RX_BUF_TEMP_SIZE - last_dma_pos;
                 _fff_write_multiple(fifo_uart_rx, &rx_buf_temp[last_dma_pos], rx_size);
-                if (curr_dma_pos > 0)
-                {
+                if (curr_dma_pos > 0) {
                     _fff_write_multiple(fifo_uart_rx, rx_buf_temp, curr_dma_pos);
                 }
                 rx_size += curr_dma_pos;
@@ -251,13 +224,11 @@ void USART2_IRQHandler(void)
 }
 
 /* DMA1通道1中断服务函数（USART2 TX DMA） */
-void DMA1_Channel1_IRQHandler(void)
-{
+void DMA1_Channel1_IRQHandler(void) {
     HAL_DMA_IRQHandler(&hdma_usart2_tx); /* 调用HAL库DMA TX中断处理函数 */
 }
 
 /* DMA1通道2中断服务函数（USART2 RX DMA） */
-void DMA1_Channel2_IRQHandler(void)
-{
+void DMA1_Channel2_IRQHandler(void) {
     HAL_DMA_IRQHandler(&hdma_usart2_rx); /* 调用HAL库DMA RX中断处理函数 */
 }

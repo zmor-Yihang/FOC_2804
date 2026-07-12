@@ -1,10 +1,10 @@
 #ifndef __FOC_H__
 #define __FOC_H__
 
-#include "stm32g4xx_hal.h"
 #include "../alg/clark_park.h"
 #include "../alg/pid.h"
 #include "../app/user_config.h"
+#include "stm32g4xx_hal.h"
 
 typedef struct flux_weak flux_weak_t;
 
@@ -22,8 +22,7 @@ typedef struct flux_weak flux_weak_t;
 #define FOC_CURRENT_LOOP_DT_S (1.0f / FOC_CURRENT_LOOP_FREQ_HZ)
 
 /* FOC 核心控制对象 */
-typedef struct
-{
+typedef struct {
     float target_position;
     float target_speed; /* 目标值 */
     float target_id;
@@ -42,7 +41,7 @@ typedef struct
     pid_controller_t *pid_iq;
     pid_controller_t *pid_speed;
     pid_controller_t *pid_position;
-    flux_weak_t *flux_weak;
+    flux_weak_t      *flux_weak;
 
     abc_t duty_cycle; /* 输出占空比 */
 

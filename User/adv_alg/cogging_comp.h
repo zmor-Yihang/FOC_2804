@@ -1,12 +1,12 @@
 #ifndef __COGGING_COMP_H__
 #define __COGGING_COMP_H__
 
-#include "stm32g431xx.h"
 #include "../app/user_config.h"
 #include "./sensor/encoder.h"
+#include "stm32g431xx.h"
 
 extern const uint16_t g_cogging_comp_raw_count_table[COGGING_COMP_TABLE_SIZE];
-extern const float g_cogging_comp_iq_table[COGGING_COMP_TABLE_SIZE];
+extern const float    g_cogging_comp_iq_table[COGGING_COMP_TABLE_SIZE];
 
 /**
  * @brief 根据编码器单圈 raw count 查表得到齿槽 q 轴前馈补偿电流

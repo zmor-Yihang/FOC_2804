@@ -3,8 +3,7 @@
 /**
  * @brief 初始化非线性磁链观测器
  */
-void fluxObserver_init(fluxobserver_t *obs, const fluxobserver_cfg_t *cfg)
-{
+void fluxObserver_init(fluxobserver_t *obs, const fluxobserver_cfg_t *cfg) {
     obs->cfg = cfg;
 
     // 初始化状态量为0
@@ -36,8 +35,7 @@ void fluxObserver_init(fluxobserver_t *obs, const fluxobserver_cfg_t *cfg)
 /**
  * @brief 运行非线性磁链观测器
  */
-void fluxObserver_estimate(fluxobserver_t *obs)
-{
+void fluxObserver_estimate(fluxobserver_t *obs) {
     const fluxobserver_cfg_t *cfg = obs->cfg;
 
     // y = -Rs*i + u
@@ -73,9 +71,7 @@ void fluxObserver_estimate(fluxobserver_t *obs)
     float speed_integral_step = obs->k_pll_ki * e_theta * cfg->ts;
 
     // 与 encoder PLL 保持一致：到达限幅后仅允许反向积分释放，避免积分器继续累积
-    if (!((obs->speed_rad_s >= obs->pll_out_limit && speed_integral_step > 0.0f) ||
-          (obs->speed_rad_s <= -obs->pll_out_limit && speed_integral_step < 0.0f)))
-    {
+    if (!((obs->speed_rad_s >= obs->pll_out_limit && speed_integral_step > 0.0f) || (obs->speed_rad_s <= -obs->pll_out_limit && speed_integral_step < 0.0f))) {
         obs->speed_rad_s += speed_integral_step;
 
         if (obs->speed_rad_s > obs->pll_out_limit)
@@ -100,15 +96,13 @@ void fluxObserver_estimate(fluxobserver_t *obs)
  * @note 返回PLL输出的平滑角度z1，而非直接从磁链计算的theta_est
  *       这样可以保证角度连续平滑，避免静差问题
  */
-float fluxObserver_get_angle(fluxobserver_t *obs)
-{
+float fluxObserver_get_angle(fluxobserver_t *obs) {
     return obs->z1;
 }
 
 /**
  * @brief 获取估算的速度 (rpm)
  */
-float fluxObserver_get_speed(fluxobserver_t *obs)
-{
+float fluxObserver_get_speed(fluxobserver_t *obs) {
     return obs->speed_est;
 }

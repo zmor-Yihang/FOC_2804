@@ -6,8 +6,7 @@
  * @param  offsets  对应通道零偏（单位：V）
  * @param  currents 输出三相电流（单位：A）
  */
-static void currentSense_convert_rawToCurrent(const adc_rawValues_t *raw, const current_sense_offset_t *offsets, abc_t *currents)
-{
+static void currentSense_convert_rawToCurrent(const adc_rawValues_t *raw, const current_sense_offset_t *offsets, abc_t *currents) {
     // ADC 原始码值转采样电压：Vout = raw * Vref / resolution
     float vout_a = (float)raw->ia_raw * ADC_VREF / ADC_RESOLUTION; // A 相采样放大器输出电压
     float vout_b = (float)raw->ib_raw * ADC_VREF / ADC_RESOLUTION; // B 相采样放大器输出电压
@@ -36,9 +35,8 @@ static void currentSense_convert_rawToCurrent(const adc_rawValues_t *raw, const 
  * @brief  控制接口：读取注入通道 ADC 并输出三相电流
  * @param  currents 输出三相电流（单位：A）
  */
-void currentSense_get_injectedValue(abc_t *currents)
-{
-    adc_rawValues_t raw;
+void currentSense_get_injectedValue(abc_t *currents) {
+    adc_rawValues_t        raw;
     current_sense_offset_t offsets;
 
     adc_get_injectedRaw(&raw);     // 读取注入组采样值（通常与 PWM 同步）
@@ -50,9 +48,8 @@ void currentSense_get_injectedValue(abc_t *currents)
  * @brief  调试接口：读取常规通道 ADC 并输出三相电流
  * @param  currents 输出三相电流（单位：A）
  */
-void currentSenseDebug_get_regularValue(abc_t *currents)
-{
-    adc_rawValues_t raw;
+void currentSenseDebug_get_regularValue(abc_t *currents) {
+    adc_rawValues_t        raw;
     current_sense_offset_t offsets;
 
     adcDebug_get_regularRaw(&raw); // 读取常规组采样值
@@ -64,7 +61,6 @@ void currentSenseDebug_get_regularValue(abc_t *currents)
  * @brief  调试接口：导出当前电流采样零偏
  * @param  offsets 输出零偏结构体
  */
-void currentSenseDebug_get_offset(current_sense_offset_t *offsets)
-{
+void currentSenseDebug_get_offset(current_sense_offset_t *offsets) {
     adcDebug_get_offset(offsets);
 }

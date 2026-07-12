@@ -24,8 +24,8 @@
 #ifndef FIFOFAST_H_
 #define FIFOFAST_H_
 
-#include <stdint.h> // required for data types (uint8_t, uint16_t, ...)
 #include <stddef.h> // required for "NULL"
+#include <stdint.h> // required for data types (uint8_t, uint16_t, ...)
 #include <string.h> // required for memcopy
 
 // include required macros
@@ -38,10 +38,10 @@
 // c) add the relative path to: "../src/subrepo/fifofast/" or wherever this code is located. DONE!
 //
 // YOU DO NOT need to change the include(s) below.
-#include "macros/mpl/macro_cat.h"
 #include "macros/com/macro_array.h"
 #include "macros/com/macro_math.h"
 #include "macros/com/macro_type.h"
+#include "macros/mpl/macro_cat.h"
 
 //////////////////////////////////////////////////////////////////////////
 // User Config
@@ -113,14 +113,13 @@
 typedef FIFOFAST_INDEX_T fff_index_t;
 typedef FIFOFAST_LEVEL_T fff_level_t;
 
-typedef struct
-{
-	const fff_index_t data_size; // bytes per element in data array
-	const fff_index_t mask;		 // (max amount of elements in data array) - 1
-	fff_index_t read;			 // index from which to read next element
-	fff_index_t write;			 // index to which to write next element
-	fff_level_t level;			 // current amount of stored data. Is larger than 'mask', if full
-	uint8_t data[];				 // data storage array
+typedef struct {
+    const fff_index_t data_size; // bytes per element in data array
+    const fff_index_t mask;      // (max amount of elements in data array) - 1
+    fff_index_t       read;      // index from which to read next element
+    fff_index_t       write;     // index to which to write next element
+    fff_level_t       level;     // current amount of stored data. Is larger than 'mask', if full
+    uint8_t           data[];    // data storage array
 } fff_proto_t;
 
 //////////////////////////////////////////////////////////////////////////
@@ -134,8 +133,8 @@ static inline fff_level_t fff_mem_level(fff_proto_t *fifo) __attribute__((__alwa
 static inline fff_index_t fff_mem_free(fff_proto_t *fifo) __attribute__((__always_inline__));
 
 static inline fff_index_t fff_data_size(fff_proto_t *fifo) __attribute__((__always_inline__));
-static inline uint8_t fff_is_empty(fff_proto_t *fifo) __attribute__((__always_inline__));
-static inline uint8_t fff_is_full(fff_proto_t *fifo) __attribute__((__always_inline__));
+static inline uint8_t     fff_is_empty(fff_proto_t *fifo) __attribute__((__always_inline__));
+static inline uint8_t     fff_is_full(fff_proto_t *fifo) __attribute__((__always_inline__));
 
 static inline void fff_reset(fff_proto_t *fifo) __attribute__((__always_inline__));
 static inline void fff_remove(fff_proto_t *fifo, fff_level_t amount) __attribute__((__always_inline__));
@@ -144,14 +143,14 @@ static inline void fff_write(fff_proto_t *fifo, void *data) __attribute__((__alw
 static inline void fff_write_lite(fff_proto_t *fifo, void *data) __attribute__((__always_inline__));
 
 static inline void *fff_peek_read(fff_proto_t *fifo, fff_index_t idx) __attribute__((__always_inline__));
-static inline void fff_peek_write(fff_proto_t *fifo, fff_index_t idx, void *data) __attribute__((__always_inline__));
+static inline void  fff_peek_write(fff_proto_t *fifo, fff_index_t idx, void *data) __attribute__((__always_inline__));
 
 //////////////////////////////////////////////////////////////////////////
 // Function Declarations (Internal)
 //////////////////////////////////////////////////////////////////////////
 
 static inline fff_index_t fff_wrap(fff_proto_t *fifo, fff_index_t idx) __attribute__((__always_inline__));
-static inline void *fff_data_p(fff_proto_t *fifo, fff_index_t idx) __attribute__((__always_inline__));
+static inline void       *fff_data_p(fff_proto_t *fifo, fff_index_t idx) __attribute__((__always_inline__));
 
 //////////////////////////////////////////////////////////////////////////
 // user macros (_fff_*)
@@ -185,28 +184,26 @@ static inline void *fff_data_p(fff_proto_t *fifo, fff_index_t idx) __attribute__
 //				          x == 65536 | 8
 //				131072 <= x          | 12
 
-#define _fff_declare(_type, _id, _depth)         \
-	struct _FFF_NAME_STRUCT(_id)                 \
-	{                                            \
-		_FFF_GET_TYPE(_depth)                    \
-		read;                                    \
-		_FFF_GET_TYPE(_depth)                    \
-		write;                                   \
-		_FFF_GET_TYPE(_depth + 1)                \
-		level;                                   \
-		_type data[_FFF_GET_ARRAYDEPTH(_depth)]; \
-	} _id
+#define _fff_declare(_type, _id, _depth)                                                                                                                                                               \
+    struct _FFF_NAME_STRUCT(_id) {                                                                                                                                                                     \
+        _FFF_GET_TYPE(_depth)                                                                                                                                                                          \
+        read;                                                                                                                                                                                          \
+        _FFF_GET_TYPE(_depth)                                                                                                                                                                          \
+        write;                                                                                                                                                                                         \
+        _FFF_GET_TYPE(_depth + 1)                                                                                                                                                                      \
+        level;                                                                                                                                                                                         \
+        _type data[_FFF_GET_ARRAYDEPTH(_depth)];                                                                                                                                                       \
+    } _id
 
-#define _fff_declare_p(_type, _id, _depth)         \
-	struct _FFF_NAME_STRUCT(_id)                   \
-	{                                              \
-		const fff_index_t data_size;               \
-		const fff_index_t mask;                    \
-		fff_index_t read;                          \
-		fff_index_t write;                         \
-		fff_level_t level;                         \
-		_type data[_FFF_GET_ARRAYDEPTH_P(_depth)]; \
-	} _id
+#define _fff_declare_p(_type, _id, _depth)                                                                                                                                                             \
+    struct _FFF_NAME_STRUCT(_id) {                                                                                                                                                                     \
+        const fff_index_t data_size;                                                                                                                                                                   \
+        const fff_index_t mask;                                                                                                                                                                        \
+        fff_index_t       read;                                                                                                                                                                        \
+        fff_index_t       write;                                                                                                                                                                       \
+        fff_level_t       level;                                                                                                                                                                       \
+        _type             data[_FFF_GET_ARRAYDEPTH_P(_depth)];                                                                                                                                         \
+    } _id
 
 // declares an array with '_size' fifos. '_size' can be any positive integer.
 #define _fff_declare_a(_type, _id, _depth, _size) _fff_declare(_type, _id, _depth)[_size]
@@ -219,41 +216,13 @@ static inline void *fff_data_p(fff_proto_t *fifo, fff_index_t idx) __attribute__
 //
 // The variants '_fff_init_p(_id)' and '_fff_init_pa(_id, _arraysize)' are intended for the
 // respective declarations.
-#define _fff_init(_id)                 \
-	struct _FFF_NAME_STRUCT(_id) _id = \
-		{                              \
-			0,                         \
-			0,                         \
-			0,                         \
-			{}}
+#define _fff_init(_id) struct _FFF_NAME_STRUCT(_id) _id = {0, 0, 0, {}}
 
-#define _fff_init_a(_id, _arraysize)     \
-	struct _FFF_NAME_STRUCT(_id) _id[] = \
-		{[0 ... _arraysize - 1] = {      \
-			 0,                          \
-			 0,                          \
-			 0,                          \
-			 {}}}
+#define _fff_init_a(_id, _arraysize) struct _FFF_NAME_STRUCT(_id) _id[] = {[0 ... _arraysize - 1] = {0, 0, 0, {}}}
 
-#define _fff_init_p(_id)                \
-	struct _FFF_NAME_STRUCT(_id) _id =  \
-		{                               \
-			_FFF_SIZEOF_DATA(_id),      \
-			_FFF_SIZEOF_ARRAY(_id) - 1, \
-			0,                          \
-			0,                          \
-			0,                          \
-			{}}
+#define _fff_init_p(_id) struct _FFF_NAME_STRUCT(_id) _id = {_FFF_SIZEOF_DATA(_id), _FFF_SIZEOF_ARRAY(_id) - 1, 0, 0, 0, {}}
 
-#define _fff_init_pa(_id, _arraysize)    \
-	struct _FFF_NAME_STRUCT(_id) _id[] = \
-		{[0 ... _arraysize - 1] = {      \
-			 _FFF_SIZEOF_DATA(_id),      \
-			 _FFF_SIZEOF_ARRAY(_id) - 1, \
-			 0,                          \
-			 0,                          \
-			 0,                          \
-			 {}}}
+#define _fff_init_pa(_id, _arraysize) struct _FFF_NAME_STRUCT(_id) _id[] = {[0 ... _arraysize - 1] = {_FFF_SIZEOF_DATA(_id), _FFF_SIZEOF_ARRAY(_id) - 1, 0, 0, 0, {}}}
 
 // masks a given index value based on a given fifo
 // This macro is used to simplify other marcos below; the end user will likely never need it
@@ -289,26 +258,24 @@ static inline void *fff_data_p(fff_proto_t *fifo, fff_index_t idx) __attribute__
 
 // clears/ resets buffer completely
 // _id:		C conform identifier
-#define _fff_reset(_id) \
-	do                  \
-	{                   \
-		_id.read = 0;   \
-		_id.write = 0;  \
-		_id.level = 0;  \
-	} while (0)
+#define _fff_reset(_id)                                                                                                                                                                                \
+    do {                                                                                                                                                                                               \
+        _id.read = 0;                                                                                                                                                                                  \
+        _id.write = 0;                                                                                                                                                                                 \
+        _id.level = 0;                                                                                                                                                                                 \
+    } while (0)
 
 // removes a certain number of elements or less, if not enough elements are available.
 // This function is especially useful after data has been used by _fff_peek(...)
 // _id:		C conform identifier
 // amount:	Amount of elements which will be removed, amount >= 0 (positive integer)
-#define _fff_remove(_id, amount)            \
-	do                                      \
-	{                                       \
-		typeof(_id.level) _amount = amount; \
-		if (amount > _id.level)             \
-			_amount = _id.level;            \
-		_fff_remove_lite(_id, _amount);     \
-	} while (0)
+#define _fff_remove(_id, amount)                                                                                                                                                                       \
+    do {                                                                                                                                                                                               \
+        typeof(_id.level) _amount = amount;                                                                                                                                                            \
+        if (amount > _id.level)                                                                                                                                                                        \
+            _amount = _id.level;                                                                                                                                                                       \
+        _fff_remove_lite(_id, _amount);                                                                                                                                                                \
+    } while (0)
 
 // removes a certain number of elements. The user must ensure that the given amount of elements can
 // be removed; values larger than _fff_depth(_id) are invalid! If you require argument checking use
@@ -316,107 +283,101 @@ static inline void *fff_data_p(fff_proto_t *fifo, fff_index_t idx) __attribute__
 // This function is especially useful after data has been used by _fff_peek(...)
 // _id:		C conform identifier
 // amount:	Amount of elements which will be removed; must be 0 <= amount <= _fff_mem_level(_id);
-#define _fff_remove_lite(_id, amount)                 \
-	do                                                \
-	{                                                 \
-		_id.level -= amount;                          \
-		_id.read = _fff_wrap(_id, _id.read + amount); \
-	} while (0)
+#define _fff_remove_lite(_id, amount)                                                                                                                                                                  \
+    do {                                                                                                                                                                                               \
+        _id.level -= amount;                                                                                                                                                                           \
+        _id.read = _fff_wrap(_id, _id.read + amount);                                                                                                                                                  \
+    } while (0)
 
 // returns the next element from the fifo and removes it from the memory
 // Use if(!_fff_is_empty(_id)) if amount of stored data is unknown
 // _id: C conform identifier
-#define _fff_read_lite(_id)                        \
-	({                                             \
-		typeof(_id.data[0]) _return;               \
-		_id.level--;                               \
-		_return = _id.data[_id.read];              \
-		_id.read = _fff_wrap(_id, (_id.read + 1)); \
-		_return;                                   \
-	})
+#define _fff_read_lite(_id)                                                                                                                                                                            \
+    ({                                                                                                                                                                                                 \
+        typeof(_id.data[0]) _return;                                                                                                                                                                   \
+        _id.level--;                                                                                                                                                                                   \
+        _return = _id.data[_id.read];                                                                                                                                                                  \
+        _id.read = _fff_wrap(_id, (_id.read + 1));                                                                                                                                                     \
+        _return;                                                                                                                                                                                       \
+    })
 
 // returns the next element from the fifo and removes it from the memory
 // if no element is available, 0 is returned
 // _id: C conform identifier
-#define _fff_read(_id)                                          \
-	({                                                          \
-		typeof(_id.data[0]) _return = (typeof(_id.data[0])){0}; \
-		if (!_fff_is_empty(_id))                                \
-			_return = _fff_read_lite(_id);                      \
-		_return;                                                \
-	})
+#define _fff_read(_id)                                                                                                                                                                                 \
+    ({                                                                                                                                                                                                 \
+        typeof(_id.data[0]) _return = (typeof(_id.data[0])){0};                                                                                                                                        \
+        if (!_fff_is_empty(_id))                                                                                                                                                                       \
+            _return = _fff_read_lite(_id);                                                                                                                                                             \
+        _return;                                                                                                                                                                                       \
+    })
 
 // adds an element to the fifo
 // Use if(!_fff_is_full(_id)) if amount of stored data is unknown
 // _id:		C conform identifier
 // newdata:	data to be written
-#define _fff_write_lite(_id, newdata)                \
-	do                                               \
-	{                                                \
-		_id.data[_id.write] = (newdata);             \
-		_id.write = _fff_wrap(_id, (_id.write + 1)); \
-		_id.level++;                                 \
-	} while (0)
+#define _fff_write_lite(_id, newdata)                                                                                                                                                                  \
+    do {                                                                                                                                                                                               \
+        _id.data[_id.write] = (newdata);                                                                                                                                                               \
+        _id.write = _fff_wrap(_id, (_id.write + 1));                                                                                                                                                   \
+        _id.level++;                                                                                                                                                                                   \
+    } while (0)
 
 // adds an element to the fifo, if space is available
 // if full element will be dismissed
 // _id:		C conform identifier
 // newdata:	data to be written
-#define _fff_write(_id, newdata)           \
-	do                                     \
-	{                                      \
-		if (!_fff_is_full(_id))            \
-			_fff_write_lite(_id, newdata); \
-	} while (0)
+#define _fff_write(_id, newdata)                                                                                                                                                                       \
+    do {                                                                                                                                                                                               \
+        if (!_fff_is_full(_id))                                                                                                                                                                        \
+            _fff_write_lite(_id, newdata);                                                                                                                                                             \
+    } while (0)
 
 // copies an array of elements to the fifo as long as space is available
 // if full all excess elements will be dismissed
 // _id:		C conform identifier
 // newdata:	array of data to be written
 // n:       amount of data do be written
-#define _fff_write_multiple(_id, newdata, n)                       \
-	do                                                             \
-	{                                                              \
-		typeof(_id.level) tocopy, btw;                             \
-		btw = _min(_fff_mem_free(_id), (n));                       \
-		if (btw == 0)                                              \
-		{                                                          \
-			break;                                                 \
-		}                                                          \
-		tocopy = _min(btw, _fff_mem_depth(_id) - _id.write);       \
-		memcpy(&_id.data[_id.write], (newdata), tocopy);           \
-		_id.level += tocopy;                                       \
-		_id.write = _fff_wrap(_id, (_id.write + tocopy));          \
-		btw -= tocopy;                                             \
-		if (btw > 0)                                               \
-		{                                                          \
-			memcpy(&_id.data[_id.write], (newdata) + tocopy, btw); \
-			_id.write = btw;                                       \
-			_id.level += btw;                                      \
-		}                                                          \
-	} while (0)
+#define _fff_write_multiple(_id, newdata, n)                                                                                                                                                           \
+    do {                                                                                                                                                                                               \
+        typeof(_id.level) tocopy, btw;                                                                                                                                                                 \
+        btw = _min(_fff_mem_free(_id), (n));                                                                                                                                                           \
+        if (btw == 0) {                                                                                                                                                                                \
+            break;                                                                                                                                                                                     \
+        }                                                                                                                                                                                              \
+        tocopy = _min(btw, _fff_mem_depth(_id) - _id.write);                                                                                                                                           \
+        memcpy(&_id.data[_id.write], (newdata), tocopy);                                                                                                                                               \
+        _id.level += tocopy;                                                                                                                                                                           \
+        _id.write = _fff_wrap(_id, (_id.write + tocopy));                                                                                                                                              \
+        btw -= tocopy;                                                                                                                                                                                 \
+        if (btw > 0) {                                                                                                                                                                                 \
+            memcpy(&_id.data[_id.write], (newdata) + tocopy, btw);                                                                                                                                     \
+            _id.write = btw;                                                                                                                                                                           \
+            _id.level += btw;                                                                                                                                                                          \
+        }                                                                                                                                                                                              \
+    } while (0)
 
 // adds an element to the fifo, but does not write any data to it. instead, a pointer to the data
 // section is returned. The caller may write up to _fff_data_size(_id) bytes to this location.
 // Use if(!_fff_is_full(_id)) if amount of stored data is unknown
 // _id: C conform identifier
-#define _fff_add_lite(_id)                                   \
-	({                                                       \
-		typeof(&_id.data[0]) _return = &_id.data[_id.write]; \
-		_id.write = _fff_wrap(_id, (_id.write + 1));         \
-		_id.level++;                                         \
-		_return;                                             \
-	})
+#define _fff_add_lite(_id)                                                                                                                                                                             \
+    ({                                                                                                                                                                                                 \
+        typeof(&_id.data[0]) _return = &_id.data[_id.write];                                                                                                                                           \
+        _id.write = _fff_wrap(_id, (_id.write + 1));                                                                                                                                                   \
+        _id.level++;                                                                                                                                                                                   \
+        _return;                                                                                                                                                                                       \
+    })
 
 // like _fff_add_lite(_id), but checks if space is available before writing. Returns 'null' if full.
 // _id: C conform identifier
-#define _fff_add(_id)                                              \
-	({                                                             \
-		typeof(&_id.data[0]) _return = (typeof(&_id.data[0]))NULL; \
-		if (!_fff_is_full(_id))                                    \
-			_return = _fff_add_lite(_id);                          \
-		_return;                                                   \
-	})
+#define _fff_add(_id)                                                                                                                                                                                  \
+    ({                                                                                                                                                                                                 \
+        typeof(&_id.data[0]) _return = (typeof(&_id.data[0]))NULL;                                                                                                                                     \
+        if (!_fff_is_full(_id))                                                                                                                                                                        \
+            _return = _fff_add_lite(_id);                                                                                                                                                              \
+        _return;                                                                                                                                                                                       \
+    })
 
 // allows accessing the data of a fifo as an array without removing any elements
 // Like any array this function can be used as a right or left site operant. Attempting to access
@@ -439,50 +400,46 @@ static inline void *fff_data_p(fff_proto_t *fifo, fff_index_t idx) __attribute__
 // https://stackoverflow.com/a/22079960/6215916
 //
 // This version has only one call of _FFF_REVERSE to safe program memory
-#define _fff_rebase(_id)                                           \
-	do                                                             \
-	{                                                              \
-		/* check if rebase required */                             \
-		if (_id.read == 0)                                         \
-			break;                                                 \
-                                                                   \
-		typeof(_id.read) idx1, idx2;                               \
-                                                                   \
-		/* reversing 1st half, 2nd half and everything together	*/ \
-		/* rotates the array									*/                            \
-		for (uint8_t rep = 0; rep < 3; rep++)                      \
-		{                                                          \
-			switch (rep)                                           \
-			{                                                      \
-			default:                                               \
-			case 0:                                                \
-				idx1 = 0;                                          \
-				idx2 = _id.read - 1;                               \
-				break;                                             \
-			case 1:                                                \
-				idx1 = _id.read;                                   \
-				idx2 = _fff_mem_mask(_id);                         \
-				break;                                             \
-			case 2:                                                \
-				idx1 = 0;                                          \
-				idx2 = _fff_mem_mask(_id);                         \
-				break;                                             \
-			}                                                      \
-                                                                   \
-			/* reverse section from idx1 to idx2 */                \
-			for (; idx1 < idx2; idx1++, idx2--)                    \
-			{                                                      \
-				typeof(_id.data[0]) tmp;                           \
-				tmp = _id.data[idx1];                              \
-				_id.data[idx1] = _id.data[idx2];                   \
-				_id.data[idx2] = tmp;                              \
-			}                                                      \
-		}                                                          \
-                                                                   \
-		/* Update data indices */                                  \
-		_id.write = _id.write - _id.read;                          \
-		_id.read = 0;                                              \
-	} while (0)
+#define _fff_rebase(_id)                                                                                                                                                                               \
+    do {                                                                                                                                                                                               \
+        /* check if rebase required */                                                                                                                                                                 \
+        if (_id.read == 0)                                                                                                                                                                             \
+            break;                                                                                                                                                                                     \
+                                                                                                                                                                                                       \
+        typeof(_id.read) idx1, idx2;                                                                                                                                                                   \
+                                                                                                                                                                                                       \
+        /* reversing 1st half, 2nd half and everything together	*/                                                                                                                                     \
+        /* rotates the array									*/                                                                                                                                                                \
+        for (uint8_t rep = 0; rep < 3; rep++) {                                                                                                                                                        \
+            switch (rep) {                                                                                                                                                                             \
+                default:                                                                                                                                                                               \
+                case 0:                                                                                                                                                                                \
+                    idx1 = 0;                                                                                                                                                                          \
+                    idx2 = _id.read - 1;                                                                                                                                                               \
+                    break;                                                                                                                                                                             \
+                case 1:                                                                                                                                                                                \
+                    idx1 = _id.read;                                                                                                                                                                   \
+                    idx2 = _fff_mem_mask(_id);                                                                                                                                                         \
+                    break;                                                                                                                                                                             \
+                case 2:                                                                                                                                                                                \
+                    idx1 = 0;                                                                                                                                                                          \
+                    idx2 = _fff_mem_mask(_id);                                                                                                                                                         \
+                    break;                                                                                                                                                                             \
+            }                                                                                                                                                                                          \
+                                                                                                                                                                                                       \
+            /* reverse section from idx1 to idx2 */                                                                                                                                                    \
+            for (; idx1 < idx2; idx1++, idx2--) {                                                                                                                                                      \
+                typeof(_id.data[0]) tmp;                                                                                                                                                               \
+                tmp = _id.data[idx1];                                                                                                                                                                  \
+                _id.data[idx1] = _id.data[idx2];                                                                                                                                                       \
+                _id.data[idx2] = tmp;                                                                                                                                                                  \
+            }                                                                                                                                                                                          \
+        }                                                                                                                                                                                              \
+                                                                                                                                                                                                       \
+        /* Update data indices */                                                                                                                                                                      \
+        _id.write = _id.write - _id.read;                                                                                                                                                              \
+        _id.read = 0;                                                                                                                                                                                  \
+    } while (0)
 
 //////////////////////////////////////////////////////////////////////////
 // Inline functions
@@ -491,82 +448,67 @@ static inline void *fff_data_p(fff_proto_t *fifo, fff_index_t idx) __attribute__
 // Inline functions MUST be defined in the .h, not in the .c file to work correctly!
 
 // auxiliary functions
-static inline fff_index_t fff_wrap(fff_proto_t *fifo, fff_index_t idx)
-{
-	return (idx & fifo->mask);
+static inline fff_index_t fff_wrap(fff_proto_t *fifo, fff_index_t idx) {
+    return (idx & fifo->mask);
 }
-static inline void *fff_data_p(fff_proto_t *fifo, fff_index_t idx)
-{
-	return &(fifo->data[idx * fifo->data_size]);
+static inline void *fff_data_p(fff_proto_t *fifo, fff_index_t idx) {
+    return &(fifo->data[idx * fifo->data_size]);
 }
-static inline fff_index_t fff_mem_mask(fff_proto_t *fifo)
-{
-	return (fifo->mask);
+static inline fff_index_t fff_mem_mask(fff_proto_t *fifo) {
+    return (fifo->mask);
 }
-static inline fff_index_t fff_data_size(fff_proto_t *fifo)
-{
-	return fifo->data_size;
+static inline fff_index_t fff_data_size(fff_proto_t *fifo) {
+    return fifo->data_size;
 }
 
 //
-static inline uint8_t fff_is_empty(fff_proto_t *fifo)
-{
-	return (fifo->level == 0);
+static inline uint8_t fff_is_empty(fff_proto_t *fifo) {
+    return (fifo->level == 0);
 }
-static inline uint8_t fff_is_full(fff_proto_t *fifo)
-{
-	return (fifo->level > fifo->mask);
+static inline uint8_t fff_is_full(fff_proto_t *fifo) {
+    return (fifo->level > fifo->mask);
 }
-static inline fff_level_t fff_mem_level(fff_proto_t *fifo)
-{
-	return (fifo->level);
+static inline fff_level_t fff_mem_level(fff_proto_t *fifo) {
+    return (fifo->level);
 }
-static inline fff_index_t fff_mem_free(fff_proto_t *fifo)
-{
-	return (fifo->mask - fifo->level + 1);
+static inline fff_index_t fff_mem_free(fff_proto_t *fifo) {
+    return (fifo->mask - fifo->level + 1);
 }
 
 //
-static inline void fff_reset(fff_proto_t *fifo)
-{
-	fifo->read = 0;
-	fifo->write = 0;
-	fifo->level = 0;
+static inline void fff_reset(fff_proto_t *fifo) {
+    fifo->read = 0;
+    fifo->write = 0;
+    fifo->level = 0;
 }
 
-static inline void fff_remove(fff_proto_t *fifo, fff_level_t amount)
-{
-	if (amount > fifo->level)
-		amount = fifo->level;
-	fff_remove_lite(fifo, amount);
+static inline void fff_remove(fff_proto_t *fifo, fff_level_t amount) {
+    if (amount > fifo->level)
+        amount = fifo->level;
+    fff_remove_lite(fifo, amount);
 }
-static inline void fff_remove_lite(fff_proto_t *fifo, fff_level_t amount)
-{
-	fifo->level -= amount;
-	fifo->read = fff_wrap(fifo, fifo->read + amount);
+static inline void fff_remove_lite(fff_proto_t *fifo, fff_level_t amount) {
+    fifo->level -= amount;
+    fifo->read = fff_wrap(fifo, fifo->read + amount);
 }
 
-static inline void fff_write(fff_proto_t *fifo, void *data)
-{
-	if (!fff_is_full(fifo))
-		fff_write_lite(fifo, data);
+static inline void fff_write(fff_proto_t *fifo, void *data) {
+    if (!fff_is_full(fifo))
+        fff_write_lite(fifo, data);
 }
-static inline void fff_write_lite(fff_proto_t *fifo, void *data)
-{
-	memcpy(fff_data_p(fifo, fifo->write), data, fifo->data_size);
-	fifo->write = fff_wrap(fifo, fifo->write + 1);
-	fifo->level++;
+static inline void fff_write_lite(fff_proto_t *fifo, void *data) {
+    memcpy(fff_data_p(fifo, fifo->write), data, fifo->data_size);
+    fifo->write = fff_wrap(fifo, fifo->write + 1);
+    fifo->level++;
 }
 
 // the peek function MUST be split into two to work as a normal c function
 // BOTH function STILL refer to the top (read) end of the fifo
-static inline void *fff_peek_read(fff_proto_t *fifo, fff_index_t idx)
-{
-	return fff_data_p(fifo, fff_wrap(fifo, fifo->read + idx));
+static inline void *fff_peek_read(fff_proto_t *fifo, fff_index_t idx) {
+    return fff_data_p(fifo, fff_wrap(fifo, fifo->read + idx));
 }
-static inline void fff_peek_write(fff_proto_t *fifo, fff_index_t idx, void *data)
-{
-	memcpy(fff_data_p(fifo, fff_wrap(fifo, fifo->read + idx)), data, fifo->data_size);
+static inline void fff_peek_write(fff_proto_t *fifo, fff_index_t idx, void *data) {
+    memcpy(fff_data_p(fifo, fff_wrap(fifo, fifo->read + idx)), data, fifo->data_size);
 }
 
 #endif /* FIFOFAST_H_ */

@@ -5,8 +5,7 @@
  * @note  ψ̂_s 默认初值取 (ψ_e, 0)，等价于初始角度 0；若已知初始角度，
  *        建议在 init 之后再调用 improvedFluxObserver_set_initial_angle
  */
-void improvedFluxObserver_init(improved_fluxobserver_t *obs, const improved_fluxobserver_cfg_t *cfg)
-{
+void improvedFluxObserver_init(improved_fluxobserver_t *obs, const improved_fluxobserver_cfg_t *cfg) {
     obs->cfg = cfg;
 
     obs->i_alpha = 0.0f;
@@ -34,9 +33,9 @@ void improvedFluxObserver_init(improved_fluxobserver_t *obs, const improved_flux
  * @note  ψ̂_s = L_s · i_αβ + ψ_e · [cosθ, sinθ]^T
  *        L_s · i_αβ 是定子电感产生的磁链分量，不能丢，否则 ψ̂_r 初值会偏离磁链圆
  */
-void improvedFluxObserver_set_initial_angle(improved_fluxobserver_t *obs, float theta_e0)
-{
+void improvedFluxObserver_set_initial_angle(improved_fluxobserver_t *obs, float theta_e0) {
     const improved_fluxobserver_cfg_t *cfg = obs->cfg;
+
     float theta = wrap_neg_pi_to_pi(theta_e0);
 
     obs->xhat_alpha = cfg->ls * obs->i_alpha + cfg->psi_m * cosf(theta);
@@ -67,8 +66,7 @@ void improvedFluxObserver_set_initial_angle(improved_fluxobserver_t *obs, float 
  *   - flux_error 收敛到 0 即表示 |ψ̂_r| 锁在磁链圆 ψ_e 上
  *   - ψ̂_r 在状态更新前后各算一次：前者用于构造修正项，后者用于角度提取与诊断
  */
-void improvedFluxObserver_estimate(improved_fluxobserver_t *obs)
-{
+void improvedFluxObserver_estimate(improved_fluxobserver_t *obs) {
     const improved_fluxobserver_cfg_t *cfg = obs->cfg;
 
     // ψ̂_r = ψ̂_s − L_s · i_αβ
@@ -106,17 +104,12 @@ void improvedFluxObserver_estimate(improved_fluxobserver_t *obs)
     float speed_integral_step = cfg->pll_ki * e_theta * cfg->ts;
 
     // 条件抗饱和：达到限幅后只允许反向积分释放
-    if (!((obs->speed_rad_s >= obs->pll_out_limit && speed_integral_step > 0.0f) ||
-          (obs->speed_rad_s <= -obs->pll_out_limit && speed_integral_step < 0.0f)))
-    {
+    if (!((obs->speed_rad_s >= obs->pll_out_limit && speed_integral_step > 0.0f) || (obs->speed_rad_s <= -obs->pll_out_limit && speed_integral_step < 0.0f))) {
         obs->speed_rad_s += speed_integral_step;
 
-        if (obs->speed_rad_s > obs->pll_out_limit)
-        {
+        if (obs->speed_rad_s > obs->pll_out_limit) {
             obs->speed_rad_s = obs->pll_out_limit;
-        }
-        else if (obs->speed_rad_s < -obs->pll_out_limit)
-        {
+        } else if (obs->speed_rad_s < -obs->pll_out_limit) {
             obs->speed_rad_s = -obs->pll_out_limit;
         }
     }
@@ -129,15 +122,13 @@ void improvedFluxObserver_estimate(improved_fluxobserver_t *obs)
  * @brief 获取观测电角度
  * @note  返回 PLL 输出 theta_pll，相比 atan2 直接角度更平滑、不会跳变
  */
-float improvedFluxObserver_get_angle(improved_fluxobserver_t *obs)
-{
+float improvedFluxObserver_get_angle(improved_fluxobserver_t *obs) {
     return obs->theta_pll;
 }
 
 /**
  * @brief 获取观测机械转速 (rpm)
  */
-float improvedFluxObserver_get_speed(improved_fluxobserver_t *obs)
-{
+float improvedFluxObserver_get_speed(improved_fluxobserver_t *obs) {
     return obs->speed_est;
 }

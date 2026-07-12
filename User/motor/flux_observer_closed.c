@@ -31,8 +31,7 @@ static float angle_observer_temp = 0.0f;
 static float flux_angle_temp = 0.0f;
 static float flux_linkage_temp = 0.0f;
 
-static void fluxObserver_closed_callback(void)
-{
+static void fluxObserver_closed_callback(void) {
     // 更新编码器状态
     encoder_update();
 
@@ -79,8 +78,7 @@ static void fluxObserver_closed_callback(void)
     flux_linkage_temp = sqrtf(flux_observer.xhat_alpha * flux_observer.xhat_alpha + flux_observer.xhat_beta * flux_observer.xhat_beta);
 }
 
-void fluxObseverClosed_init(float speed_rpm)
-{
+void fluxObseverClosed_init(float speed_rpm) {
     // 初始化电流环与速度环 PID 控制器
     pid_init(&pid_id, PID_MODE_PI, FLUX_OBSERVER_CURRENT_PID_KP, FLUX_OBSERVER_CURRENT_PID_KI, 0.0f, -U_DC / 2.0f, U_DC / 2.0f, PID_LIMIT_DISABLE);
     pid_init(&pid_iq, PID_MODE_PI, FLUX_OBSERVER_CURRENT_PID_KP, FLUX_OBSERVER_CURRENT_PID_KI, 0.0f, -U_DC / 2.0f, U_DC / 2.0f, PID_LIMIT_DISABLE);
@@ -107,8 +105,7 @@ void fluxObseverClosed_init(float speed_rpm)
     adc_register_injectedCallback(fluxObserver_closed_callback);
 }
 
-void fluxObseverClosedDebug_print_info(void)
-{
+void fluxObseverClosedDebug_print_info(void) {
     // 角度统一转换为角度制
     float angle_encoder_deg = wrap_0_2pi(angle_encoder_temp) * 57.2958f;
     float angle_observer_deg = wrap_0_2pi(angle_observer_temp) * 57.2958f;

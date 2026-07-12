@@ -3,12 +3,11 @@
 TIM_HandleTypeDef htim2; // TIM2句柄
 TIM_HandleTypeDef htim3; // TIM3句柄
 
-void tim_init(void)
-{
-    GPIO_InitTypeDef gpio_init_struct = {0};
-    TIM_OC_InitTypeDef tim_oc_init_struct = {0};
+void tim_init(void) {
+    GPIO_InitTypeDef        gpio_init_struct = {0};
+    TIM_OC_InitTypeDef      tim_oc_init_struct = {0};
     TIM_MasterConfigTypeDef master_config = {0};
-    TIM_SlaveConfigTypeDef slave_config = {0};
+    TIM_SlaveConfigTypeDef  slave_config = {0};
 
     __HAL_RCC_GPIOA_CLK_ENABLE();
     __HAL_RCC_TIM2_CLK_ENABLE();
@@ -78,8 +77,7 @@ void tim_init(void)
     TIM2->CR2 = (TIM2->CR2 & ~TIM_CR2_MMS) | TIM_TRGO_UPDATE;
 }
 
-void tim_set_pwmDuty(float duty1, float duty2, float duty3)
-{
+void tim_set_pwmDuty(float duty1, float duty2, float duty3) {
     float duty_a = duty1;
     float duty_b = duty2;
     float duty_c = duty3;

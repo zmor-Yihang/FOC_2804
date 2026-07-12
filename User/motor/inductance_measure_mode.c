@@ -1,6 +1,6 @@
 #include "inductance_measure_mode.h"
 
-static foc_t foc_ind_meas_handle;
+static foc_t      foc_ind_meas_handle;
 static ind_meas_t ind_meas;
 
 static const ind_meas_cfg_t ind_meas_cfg = {
@@ -31,8 +31,7 @@ static float lq_uH_temp = 0.0f;
 static float l_avg_uH_temp = 0.0f;
 static float ld_lq_diff_uH_temp = 0.0f;
 
-static void inductance_measure_callback(void)
-{
+static void inductance_measure_callback(void) {
     encoder_update();
 
     float angle_el = wrap_0_2pi(encoder_get_pllAngle() - foc_ind_meas_handle.angle_offset);
@@ -40,20 +39,16 @@ static void inductance_measure_callback(void)
     abc_t i_abc;
     currentSense_get_injectedValue(&i_abc);
     alphabeta_t i_alphabeta = clark_transform(i_abc);
-    dq_t i_dq = park_transform(i_alphabeta, angle_el);
+    dq_t        i_dq = park_transform(i_alphabeta, angle_el);
 
     indMeas_update(&ind_meas, i_dq.d, i_dq.q);
 
     foc_ind_meas_handle.v_d_out = indMeas_get_vd_ref(&ind_meas);
     foc_ind_meas_handle.v_q_out = indMeas_get_vq_ref(&ind_meas);
 
-    if ((indMeas_get_state(&ind_meas) == IND_MEAS_DONE) ||
-        (indMeas_get_state(&ind_meas) == IND_MEAS_FAULT))
-    {
+    if ((indMeas_get_state(&ind_meas) == IND_MEAS_DONE) || (indMeas_get_state(&ind_meas) == IND_MEAS_FAULT)) {
         foc_ind_meas_handle.duty_cycle = gateDrive_stop();
-    }
-    else
-    {
+    } else {
         dq_t u_dq = {
             .d = foc_ind_meas_handle.v_d_out,
             .q = foc_ind_meas_handle.v_q_out,
@@ -77,8 +72,7 @@ static void inductance_measure_callback(void)
     ld_lq_diff_uH_temp = indMeas_get_ld_lq_diff(&ind_meas) * 1.0e6f;
 }
 
-void inductanceMeasureMode_init(void)
-{
+void inductanceMeasureMode_init(void) {
     foc_init(&foc_ind_meas_handle, NULL, NULL, NULL);
     zero_alignment(&foc_ind_meas_handle);
 
@@ -88,23 +82,10 @@ void inductanceMeasureMode_init(void)
     adc_register_injectedCallback(inductance_measure_callback);
 }
 
-void inductanceMeasureModeDebug_print_info(void)
-{
+void inductanceMeasureModeDebug_print_info(void) {
     float data[14] = {
-        state_temp,
-        fault_temp,
-        axis_temp,
-        id_fb_temp,
-        iq_fb_temp,
-        vd_ref_temp,
-        vq_ref_temp,
-        current_used_temp,
-        last_delta_current_temp,
-        last_l_sample_uH_temp,
-        ld_uH_temp,
-        lq_uH_temp,
-        l_avg_uH_temp,
-        ld_lq_diff_uH_temp,
+        state_temp, fault_temp, axis_temp,     id_fb_temp,         iq_fb_temp, vd_ref_temp, vq_ref_temp, current_used_temp, last_delta_current_temp, last_l_sample_uH_temp,
+        ld_uH_temp, lq_uH_temp, l_avg_uH_temp, ld_lq_diff_uH_temp,
     };
 
     vofa_send(data, 14);

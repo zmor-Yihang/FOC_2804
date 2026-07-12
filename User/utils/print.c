@@ -1,6 +1,5 @@
 #include "print.h"
 
-
 /* JustFloat 协议帧尾: 0x00, 0x00, 0x80, 0x7f */
 static const uint8_t justfloat_tail[4] = {0x00, 0x00, 0x80, 0x7f};
 
@@ -9,12 +8,10 @@ static const uint8_t justfloat_tail[4] = {0x00, 0x00, 0x80, 0x7f};
  * @param data float数组指针(一次存num个元素)
  * @param num float数据个数(通道数)
  */
-void vofa_send(float *data, uint16_t num)
-{
-
+void vofa_send(float *data, uint16_t num) {
     /* 定义发送缓冲区 */
     static uint8_t tx_buffer[128];
-    uint16_t data_len = num * sizeof(float);
+    uint16_t       data_len = num * sizeof(float);
 
     /* 复制数据部分 */
     memcpy(tx_buffer, data, data_len);

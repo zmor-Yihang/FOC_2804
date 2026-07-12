@@ -24,8 +24,7 @@ static float vd_out_temp = 0.0f;
 static float state_temp = 0.0f;
 static float resistance_temp = 0.0f;
 
-static void resistance_measure_callback(void)
-{
+static void resistance_measure_callback(void) {
     encoder_update();
 
     // 电流采样
@@ -56,12 +55,9 @@ static void resistance_measure_callback(void)
     resistance_temp = resMeas_get_result(&res_meas);
 }
 
-void resistanceMeasureMode_init(void)
-{
-    pid_init(&pid_id, PID_MODE_PI, CURRENT_PID_KP, CURRENT_PID_KI, 0.0f,
-             CURRENT_PID_OUT_MIN, CURRENT_PID_OUT_MAX, PID_LIMIT_DISABLE);
-    pid_init(&pid_iq, PID_MODE_PI, CURRENT_PID_KP, CURRENT_PID_KI, 0.0f,
-             CURRENT_PID_OUT_MIN, CURRENT_PID_OUT_MAX, PID_LIMIT_DISABLE);
+void resistanceMeasureMode_init(void) {
+    pid_init(&pid_id, PID_MODE_PI, CURRENT_PID_KP, CURRENT_PID_KI, 0.0f, CURRENT_PID_OUT_MIN, CURRENT_PID_OUT_MAX, PID_LIMIT_DISABLE);
+    pid_init(&pid_iq, PID_MODE_PI, CURRENT_PID_KP, CURRENT_PID_KI, 0.0f, CURRENT_PID_OUT_MIN, CURRENT_PID_OUT_MAX, PID_LIMIT_DISABLE);
 
     foc_init(&foc_res_meas_handle, &pid_id, &pid_iq, NULL);
 
@@ -71,8 +67,7 @@ void resistanceMeasureMode_init(void)
     adc_register_injectedCallback(resistance_measure_callback);
 }
 
-void resistanceMeasureModeDebug_print_info(void)
-{
+void resistanceMeasureModeDebug_print_info(void) {
     float data[4] = {state_temp, id_fb_temp, vd_out_temp, resistance_temp};
     vofa_send(data, 4);
 }

@@ -1,7 +1,6 @@
 #include "mxlemming_observer.h"
 
-void mxlemmingObserver_init(mxlemming_obs_t *obs, const mxlemming_cfg_t *cfg)
-{
+void mxlemmingObserver_init(mxlemming_obs_t *obs, const mxlemming_cfg_t *cfg) {
     obs->cfg = cfg;
 
     obs->x1 = 0.0f;
@@ -23,10 +22,9 @@ void mxlemmingObserver_init(mxlemming_obs_t *obs, const mxlemming_cfg_t *cfg)
     obs->pll_out_limit = cfg->pll_speed_limit_rpm * MATH_TWO_PI * cfg->poles / 60.0f;
 }
 
-void mxlemmingObserver_update(mxlemming_obs_t *obs)
-{
+void mxlemmingObserver_update(mxlemming_obs_t *obs) {
     const mxlemming_cfg_t *cfg = obs->cfg;
-    float dt = cfg->ts;
+    float                  dt = cfg->ts;
 
     // 电流差分法积分
     obs->x1 += (obs->u_alpha - cfg->rs * obs->i_alpha) * dt - cfg->ls * (obs->i_alpha - obs->i_alpha_last);
@@ -39,8 +37,7 @@ void mxlemmingObserver_update(mxlemming_obs_t *obs)
     // 幅值约束：圆形 clamp，半径 lambda
     float r2 = obs->x1 * obs->x1 + obs->x2 * obs->x2;
     float lambda2 = cfg->lambda * cfg->lambda;
-    if (r2 > lambda2)
-    {
+    if (r2 > lambda2) {
         float scale = cfg->lambda / sqrtf(r2);
         obs->x1 *= scale;
         obs->x2 *= scale;
@@ -54,9 +51,7 @@ void mxlemmingObserver_update(mxlemming_obs_t *obs)
     float speed_integral_step = cfg->pll_ki * e_theta * dt;
 
     // 条件积分抗饱和
-    if (!((obs->speed_rad_s >= obs->pll_out_limit && speed_integral_step > 0.0f) ||
-          (obs->speed_rad_s <= -obs->pll_out_limit && speed_integral_step < 0.0f)))
-    {
+    if (!((obs->speed_rad_s >= obs->pll_out_limit && speed_integral_step > 0.0f) || (obs->speed_rad_s <= -obs->pll_out_limit && speed_integral_step < 0.0f))) {
         obs->speed_rad_s += speed_integral_step;
         if (obs->speed_rad_s > obs->pll_out_limit)
             obs->speed_rad_s = obs->pll_out_limit;
@@ -71,12 +66,10 @@ void mxlemmingObserver_update(mxlemming_obs_t *obs)
     obs->speed_est = obs->speed_rad_s * 60.0f / (MATH_TWO_PI * cfg->poles);
 }
 
-float mxlemmingObserver_get_angle(mxlemming_obs_t *obs)
-{
+float mxlemmingObserver_get_angle(mxlemming_obs_t *obs) {
     return obs->theta_pll;
 }
 
-float mxlemmingObserver_get_speed(mxlemming_obs_t *obs)
-{
+float mxlemmingObserver_get_speed(mxlemming_obs_t *obs) {
     return obs->speed_est;
 }

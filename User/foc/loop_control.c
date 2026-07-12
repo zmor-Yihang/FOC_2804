@@ -1,8 +1,7 @@
 #include <math.h>
-
+#include "../adv_alg/weaken_flux.h"
 #include "foc.h"
 #include "gate_drive.h"
-#include "../adv_alg/weaken_flux.h"
 
 /**
  * @brief 电流闭环运行
@@ -11,8 +10,7 @@
  * @param angle_el  电角度 (rad)
  * @param speed_rpm 机械速度反馈 (RPM), 仅在启用前馈解耦时使用
  */
-void loopControl_run_currentLoop(foc_t *handle, dq_t i_dq, float angle_el, float speed_rpm)
-{
+void loopControl_run_currentLoop(foc_t *handle, dq_t i_dq, float angle_el, float speed_rpm) {
     float v_d_pi;
     float v_q_pi;
     float v_d_ff;
@@ -54,8 +52,7 @@ void loopControl_run_currentLoop(foc_t *handle, dq_t i_dq, float angle_el, float
     float v_mag_sq = handle->v_d_out * handle->v_d_out + handle->v_q_out * handle->v_q_out;
     float v_limit_sq = v_limit * v_limit;
 
-    if (v_mag_sq > v_limit_sq)
-    {
+    if (v_mag_sq > v_limit_sq) {
         float scale = v_limit / sqrtf(v_mag_sq);
         handle->v_d_out *= scale;
         handle->v_q_out *= scale;
@@ -77,13 +74,11 @@ void loopControl_run_currentLoop(foc_t *handle, dq_t i_dq, float angle_el, float
  * @param speed_rpm 速度反馈 (RPM)
  * @param speed_loop_divider 速度环相对电流环的分频系数
  */
-void loopControl_run_speedLoop(foc_t *handle, dq_t i_dq, float angle_el, float speed_rpm, uint8_t speed_loop_divider)
-{
+void loopControl_run_speedLoop(foc_t *handle, dq_t i_dq, float angle_el, float speed_rpm, uint8_t speed_loop_divider) {
     static uint8_t speed_loop_div = 0;
 
     /* 速度环按分频执行，其他周期保持上一次 iq 目标 */
-    if (++speed_loop_div >= speed_loop_divider)
-    {
+    if (++speed_loop_div >= speed_loop_divider) {
         speed_loop_div = 0;
         float speed_loop_dt = FOC_CURRENT_LOOP_DT_S * (float)speed_loop_divider;
         handle->target_iq = pid_calculate(handle->pid_speed, handle->target_speed, speed_rpm, speed_loop_dt);
@@ -104,19 +99,17 @@ void loopControl_run_speedLoop(foc_t *handle, dq_t i_dq, float angle_el, float s
  * @param position_rad           机械多圈位置反馈 (rad)
  * @param position_loop_divider  位置环相对电流环的分频系数
  */
-void loopControl_run_positionLoop(foc_t *handle, dq_t i_dq, float angle_el, float speed_rpm, float position_rad, uint8_t position_loop_divider)
-{
+void loopControl_run_positionLoop(foc_t *handle, dq_t i_dq, float angle_el, float speed_rpm, float position_rad, uint8_t position_loop_divider) {
     static uint16_t position_loop_div = 0; // 位置环分频计数器
 
     /* 位置环按分频执行，未到执行周期时保持上一次 target_iq */
-    if (++position_loop_div >= position_loop_divider)
-    {
+    if (++position_loop_div >= position_loop_divider) {
         pid_controller_t *pid = handle->pid_position;
-        float position_loop_dt = FOC_CURRENT_LOOP_DT_S * (float)position_loop_divider;
-        float position_error;
-        float position_speed_rad_s;
-        float integral_increment;
-        float out_unclamped;
+        float             position_loop_dt = FOC_CURRENT_LOOP_DT_S * (float)position_loop_divider;
+        float             position_error;
+        float             position_speed_rad_s;
+        float             integral_increment;
+        float             out_unclamped;
 
         position_loop_div = 0; // 复位分频计数器
         position_error = handle->target_position - position_rad;
@@ -160,25 +153,20 @@ void loopControl_run_positionLoop(foc_t *handle, dq_t i_dq, float angle_el, floa
  * @param speed_rpm 速度反馈 (RPM)
  * @param speed_loop_divider 速度环相对电流环的分频系数
  */
-void loopControl_run_speedWeakLoop(foc_t *handle, dq_t i_dq, float angle_el, float speed_rpm, uint8_t speed_loop_divider)
-{
+void loopControl_run_speedWeakLoop(foc_t *handle, dq_t i_dq, float angle_el, float speed_rpm, uint8_t speed_loop_divider) {
     static uint8_t speed_loop_div = 0;
 
     /* 速度环按分频执行，其他周期保持上一次 iq 目标 */
-    if (++speed_loop_div >= speed_loop_divider)
-    {
+    if (++speed_loop_div >= speed_loop_divider) {
         float speed_loop_dt = FOC_CURRENT_LOOP_DT_S * (float)speed_loop_divider;
         speed_loop_div = 0;
         handle->target_iq = pid_calculate(handle->pid_speed, handle->target_speed, speed_rpm, speed_loop_dt);
     }
 
-    if (handle->flux_weak != NULL)
-    {
+    if (handle->flux_weak != NULL) {
         /* 弱磁环目前使用限幅前电压请求值作为电压裕量反馈。 */
         handle->target_id = fluxWeak_calculate(handle->flux_weak, handle->v_d_cmd, handle->v_q_cmd, FOC_CURRENT_LOOP_DT_S);
-    }
-    else
-    {
+    } else {
         handle->target_id = 0.0f;
     }
 

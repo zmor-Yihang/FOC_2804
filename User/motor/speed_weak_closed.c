@@ -2,7 +2,7 @@
 #include "../adv_alg/weaken_flux.h"
 #include "../bsp/i2c.h"
 
-static foc_t foc_speed_weak_closed_handle;
+static foc_t       foc_speed_weak_closed_handle;
 static flux_weak_t flux_weak_handle;
 
 static pid_controller_t pid_id;
@@ -27,8 +27,7 @@ static float v_q_out_temp = 0.0f;
 static float v_mag_temp = 0.0f;
 static float i2c_read_state_temp = 0.0f;
 
-static void speed_weak_closed_callback(void)
-{
+static void speed_weak_closed_callback(void) {
     // 更新速度
     encoder_update();
 
@@ -68,8 +67,7 @@ static void speed_weak_closed_callback(void)
     i2c_read_state_temp = (float)i2c_get_readState();
 }
 
-void speedWeakClosed_init(float speed_rpm)
-{
+void speedWeakClosed_init(float speed_rpm) {
     // 初始化速度环 PID 控制器
     pid_init(&pid_id, PID_MODE_PI, CURRENT_PID_KP, CURRENT_PID_KI, 0.0f, CURRENT_PID_OUT_MIN, CURRENT_PID_OUT_MAX, PID_LIMIT_DISABLE);
     pid_init(&pid_iq, PID_MODE_PI, CURRENT_PID_KP, CURRENT_PID_KI, 0.0f, CURRENT_PID_OUT_MIN, CURRENT_PID_OUT_MAX, PID_LIMIT_DISABLE); // 按电流环带宽1000Hz整定
@@ -94,17 +92,15 @@ void speedWeakClosed_init(float speed_rpm)
     adc_register_injectedCallback(speed_weak_closed_callback);
 }
 
-void speedWeakClosedDebug_print_info(void)
-{
+void speedWeakClosedDebug_print_info(void) {
     // PLL估计电角度也归一化并转换到角度制
     float pll_angle_normalized = fmodf(pll_angle_el_temp, MATH_TWO_PI);
-    if (pll_angle_normalized < 0.0f)
-    {
+    if (pll_angle_normalized < 0.0f) {
         pll_angle_normalized += MATH_TWO_PI;
     }
     float pll_angle_deg = pll_angle_normalized * 57.2958f;
 
-    float data[15] = {speed_rpm_temp, pll_angle_deg, id_temp, iq_temp, ia_temp, ib_temp, ic_temp,
-                      v_d_pi_temp, v_q_pi_temp, v_d_ff_temp, v_q_ff_temp, v_d_out_temp, v_q_out_temp, v_mag_temp, i2c_read_state_temp};
+    float data[15] = {speed_rpm_temp, pll_angle_deg,      id_temp, iq_temp, ia_temp, ib_temp, ic_temp, v_d_pi_temp, v_q_pi_temp, v_d_ff_temp, v_q_ff_temp, v_d_out_temp, v_q_out_temp,
+                      v_mag_temp,     i2c_read_state_temp};
     vofa_send(data, 15);
 }

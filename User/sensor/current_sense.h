@@ -1,9 +1,9 @@
 #ifndef __CURRENT_SENSE_H__
 #define __CURRENT_SENSE_H__
 
-#include "../bsp/adc.h"
 #include "../alg/clark_park.h"
 #include "../app/user_config.h"
+#include "../bsp/adc.h"
 
 #define CURRENT_SENSE_REF_VOLTAGE 1.65f                                                 // 电流采样参考电压(V)
 #define CURRENT_SENSE_SHUNT_RES 0.01f                                                   // 分流电阻(Ω)

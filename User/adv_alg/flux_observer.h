@@ -9,8 +9,7 @@
  * @brief 非线性磁链观测器配置参数
  * @note 建议在系统初始化时配置一次，运行中保持不变
  */
-typedef struct
-{
+typedef struct {
     float rs;                  // 定子电阻 (Ω)
     float ls;                  // 定子电感 (H)
     float psi_m;               // 永磁体磁链 (Wb)
@@ -26,8 +25,7 @@ typedef struct
  * @brief 非线性磁链观测器运行状态
  * @note 基于磁链圆约束的非线性观测器
  */
-typedef struct
-{
+typedef struct {
     const fluxobserver_cfg_t *cfg;
 
     float i_alpha; // 实测电流 alpha

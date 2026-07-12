@@ -4,7 +4,6 @@
 #include <stdio.h>
 #include <string.h>
 #include "../bsp/usart.h"
-
 #include "stm32g4xx_hal.h"
 
 void vofa_send(float *data, uint16_t num);

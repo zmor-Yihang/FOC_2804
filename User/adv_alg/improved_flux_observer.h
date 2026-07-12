@@ -5,8 +5,7 @@
 #include "../app/user_config.h"
 #include "../utils/angle_utils.h"
 
-typedef struct
-{
+typedef struct {
     float rs;                  // 定子电阻 (Ω)
     float ls;                  // 定子电感 (H)，SPMSM 取 (Ld+Lq)/2
     float psi_m;               // 永磁体磁链幅值 ψ_e (Wb)
@@ -19,8 +18,7 @@ typedef struct
     float pll_speed_limit_rpm; // PLL 机械转速限幅 (rpm)，用于积分抗饱和
 } improved_fluxobserver_cfg_t;
 
-typedef struct
-{
+typedef struct {
     const improved_fluxobserver_cfg_t *cfg;
 
     // 输入：αβ 静止坐标系下电流和上一拍输出电压
@@ -47,9 +45,9 @@ typedef struct
     float pll_out_limit; // PLL 输出限幅 (rad/s)，由 cfg.pll_speed_limit_rpm 换算
 } improved_fluxobserver_t;
 
-void improvedFluxObserver_init(improved_fluxobserver_t *obs, const improved_fluxobserver_cfg_t *cfg);
-void improvedFluxObserver_set_initial_angle(improved_fluxobserver_t *obs, float theta_e0);
-void improvedFluxObserver_estimate(improved_fluxobserver_t *obs);
+void  improvedFluxObserver_init(improved_fluxobserver_t *obs, const improved_fluxobserver_cfg_t *cfg);
+void  improvedFluxObserver_set_initial_angle(improved_fluxobserver_t *obs, float theta_e0);
+void  improvedFluxObserver_estimate(improved_fluxobserver_t *obs);
 float improvedFluxObserver_get_angle(improved_fluxobserver_t *obs);
 float improvedFluxObserver_get_speed(improved_fluxobserver_t *obs);
 

@@ -30,8 +30,7 @@ static float angle_obs_temp = 0.0f;
 static float flux_x1_temp = 0.0f;
 static float flux_x2_temp = 0.0f;
 
-static void mxlemming_closed_callback(void)
-{
+static void mxlemming_closed_callback(void) {
     encoder_update();
 
     // 电流采样
@@ -59,8 +58,7 @@ static void mxlemming_closed_callback(void)
     loopControl_run_speedLoop(&foc_mxlemming_handle, i_dq, angle_el, speed_feedback, FOC_SPEED_LOOP_DIVIDER);
 
     // 将输出电压写回观测器供下一拍使用
-    alphabeta_t u_alphabeta = ipark_transform(
-        (dq_t){.d = foc_mxlemming_handle.v_d_out, .q = foc_mxlemming_handle.v_q_out}, angle_el);
+    alphabeta_t u_alphabeta = ipark_transform((dq_t){.d = foc_mxlemming_handle.v_d_out, .q = foc_mxlemming_handle.v_q_out}, angle_el);
     mxlemming_observer.u_alpha = u_alphabeta.alpha;
     mxlemming_observer.u_beta = u_alphabeta.beta;
 
@@ -73,11 +71,11 @@ static void mxlemming_closed_callback(void)
     flux_x2_temp = mxlemming_observer.x2;
 }
 
-void mxlemmingObserverClosed_init(float speed_rpm)
-{
+void mxlemmingObserverClosed_init(float speed_rpm) {
     pid_init(&pid_id, PID_MODE_PI, MXLEMMING_OBSERVER_CURRENT_PID_KP, MXLEMMING_OBSERVER_CURRENT_PID_KI, 0.0f, -U_DC / 2.0f, U_DC / 2.0f, PID_LIMIT_DISABLE);
     pid_init(&pid_iq, PID_MODE_PI, MXLEMMING_OBSERVER_CURRENT_PID_KP, MXLEMMING_OBSERVER_CURRENT_PID_KI, 0.0f, -U_DC / 2.0f, U_DC / 2.0f, PID_LIMIT_DISABLE);
-    pid_init(&pid_speed, PID_MODE_PI, MXLEMMING_OBSERVER_SPEED_PID_KP, MXLEMMING_OBSERVER_SPEED_PID_KI, 0.0f, MXLEMMING_OBSERVER_SPEED_PID_OUT_MIN, MXLEMMING_OBSERVER_SPEED_PID_OUT_MAX, PID_LIMIT_ENABLE);
+    pid_init(&pid_speed, PID_MODE_PI, MXLEMMING_OBSERVER_SPEED_PID_KP, MXLEMMING_OBSERVER_SPEED_PID_KI, 0.0f, MXLEMMING_OBSERVER_SPEED_PID_OUT_MIN, MXLEMMING_OBSERVER_SPEED_PID_OUT_MAX,
+             PID_LIMIT_ENABLE);
 
     foc_init(&foc_mxlemming_handle, &pid_id, &pid_iq, &pid_speed);
     foc_set_id(&foc_mxlemming_handle, 0.0f);
@@ -89,8 +87,7 @@ void mxlemmingObserverClosed_init(float speed_rpm)
     adc_register_injectedCallback(mxlemming_closed_callback);
 }
 
-void mxlemmingObserverClosedDebug_print_info(void)
-{
+void mxlemmingObserverClosedDebug_print_info(void) {
     float angle_encoder_deg = wrap_0_2pi(angle_encoder_temp) * 57.2958f;
     float angle_obs_deg = wrap_0_2pi(angle_obs_temp) * 57.2958f;
 

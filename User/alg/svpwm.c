@@ -6,10 +6,9 @@
  * @retval duty - 输出的三相占空比 (范围 0.0 ~ 1.0)
  * @note   占空比围绕0.25中心分布，与min-max注入法输出一致
  */
-abc_t svpwm_sector1(alphabeta_t u_alphabeta)
-{
+abc_t svpwm_sector1(alphabeta_t u_alphabeta) {
     abc_t duty;
-    int N;
+    int   N;
     float u1, u2, u3;
     float t1, t2, t0_half;
 
@@ -25,36 +24,35 @@ abc_t svpwm_sector1(alphabeta_t u_alphabeta)
     N = (u1 > 0) + ((u2 > 0) << 1) + ((u3 > 0) << 2);
 
     /* 根据扇区计算矢量作用时间 */
-    switch (N)
-    {
-    case 3: /* 扇区1 */
-        t1 = u2;
-        t2 = u1;
-        break;
-    case 1: /* 扇区2 */
-        t1 = -u3;
-        t2 = -u2;
-        break;
-    case 5: /* 扇区3 */
-        t1 = u1;
-        t2 = u3;
-        break;
-    case 4: /* 扇区4 */
-        t1 = -u2;
-        t2 = -u1;
-        break;
-    case 6: /* 扇区5 */
-        t1 = u3;
-        t2 = u2;
-        break;
-    case 2: /* 扇区6 */
-        t1 = -u1;
-        t2 = -u3;
-        break;
-    default:
-        t1 = 0;
-        t2 = 0;
-        break;
+    switch (N) {
+        case 3: /* 扇区1 */
+            t1 = u2;
+            t2 = u1;
+            break;
+        case 1: /* 扇区2 */
+            t1 = -u3;
+            t2 = -u2;
+            break;
+        case 5: /* 扇区3 */
+            t1 = u1;
+            t2 = u3;
+            break;
+        case 4: /* 扇区4 */
+            t1 = -u2;
+            t2 = -u1;
+            break;
+        case 6: /* 扇区5 */
+            t1 = u3;
+            t2 = u2;
+            break;
+        case 2: /* 扇区6 */
+            t1 = -u1;
+            t2 = -u3;
+            break;
+        default:
+            t1 = 0;
+            t2 = 0;
+            break;
     }
 
     /* 归一化时间 */
@@ -62,8 +60,7 @@ abc_t svpwm_sector1(alphabeta_t u_alphabeta)
     t2 = t2 * 1.732051f / U_DC;
 
     /* 过调制处理 */
-    if ((t1 + t2) > 1.0f)
-    {
+    if ((t1 + t2) > 1.0f) {
         float k = 1.0f / (t1 + t2);
         t1 *= k;
         t2 *= k;
@@ -72,41 +69,40 @@ abc_t svpwm_sector1(alphabeta_t u_alphabeta)
     t0_half = (1.0f - t1 - t2) * 0.5f;
 
     /* 计算三相占空比 (中心对称分布，与min-max注入法一致) */
-    switch (N)
-    {
-    case 3: /* 扇区1 */
-        duty.a = t1 + t2 + t0_half;
-        duty.b = t2 + t0_half;
-        duty.c = t0_half;
-        break;
-    case 1: /* 扇区2 */
-        duty.a = t1 + t0_half;
-        duty.b = t1 + t2 + t0_half;
-        duty.c = t0_half;
-        break;
-    case 5: /* 扇区3 */
-        duty.a = t0_half;
-        duty.b = t1 + t2 + t0_half;
-        duty.c = t2 + t0_half;
-        break;
-    case 4: /* 扇区4 */
-        duty.a = t0_half;
-        duty.b = t1 + t0_half;
-        duty.c = t1 + t2 + t0_half;
-        break;
-    case 6: /* 扇区5 */
-        duty.a = t2 + t0_half;
-        duty.b = t0_half;
-        duty.c = t1 + t2 + t0_half;
-        break;
-    case 2: /* 扇区6 */
-        duty.a = t1 + t2 + t0_half;
-        duty.b = t0_half;
-        duty.c = t1 + t0_half;
-        break;
-    default:
-        duty.a = duty.b = duty.c = 0.5f;
-        break;
+    switch (N) {
+        case 3: /* 扇区1 */
+            duty.a = t1 + t2 + t0_half;
+            duty.b = t2 + t0_half;
+            duty.c = t0_half;
+            break;
+        case 1: /* 扇区2 */
+            duty.a = t1 + t0_half;
+            duty.b = t1 + t2 + t0_half;
+            duty.c = t0_half;
+            break;
+        case 5: /* 扇区3 */
+            duty.a = t0_half;
+            duty.b = t1 + t2 + t0_half;
+            duty.c = t2 + t0_half;
+            break;
+        case 4: /* 扇区4 */
+            duty.a = t0_half;
+            duty.b = t1 + t0_half;
+            duty.c = t1 + t2 + t0_half;
+            break;
+        case 6: /* 扇区5 */
+            duty.a = t2 + t0_half;
+            duty.b = t0_half;
+            duty.c = t1 + t2 + t0_half;
+            break;
+        case 2: /* 扇区6 */
+            duty.a = t1 + t2 + t0_half;
+            duty.b = t0_half;
+            duty.c = t1 + t0_half;
+            break;
+        default:
+            duty.a = duty.b = duty.c = 0.5f;
+            break;
     }
 
     return duty;
@@ -118,11 +114,10 @@ abc_t svpwm_sector1(alphabeta_t u_alphabeta)
  * @retval duty - 输出的三相占空比 (范围 0.0 ~ 1.0)
  * @note   参考《现代永磁同步电机控制原理及MATLAB仿真》 2.4.2节
  */
-abc_t svpwm_sector2(alphabeta_t u_alphabeta)
-{
-    abc_t duty;
+abc_t svpwm_sector2(alphabeta_t u_alphabeta) {
+    abc_t   duty;
     int32_t N = 0, sector = 0;
-    float Tx = 0.0f, Ty = 0.0f;
+    float   Tx = 0.0f, Ty = 0.0f;
 
     float v_alpha = u_alphabeta.alpha;
     float v_beta = u_alphabeta.beta;
@@ -135,26 +130,25 @@ abc_t svpwm_sector2(alphabeta_t u_alphabeta)
     if ((-1.732051f * v_alpha - v_beta) > 0.0f)
         N += 4;
 
-    switch (N)
-    {
-    case 3:
-        sector = 1;
-        break;
-    case 1:
-        sector = 2;
-        break;
-    case 5:
-        sector = 3;
-        break;
-    case 4:
-        sector = 4;
-        break;
-    case 6:
-        sector = 5;
-        break;
-    case 2:
-        sector = 6;
-        break;
+    switch (N) {
+        case 3:
+            sector = 1;
+            break;
+        case 1:
+            sector = 2;
+            break;
+        case 5:
+            sector = 3;
+            break;
+        case 4:
+            sector = 4;
+            break;
+        case 6:
+            sector = 5;
+            break;
+        case 2:
+            sector = 6;
+            break;
     }
 
     /* 预计算公共项 */
@@ -163,37 +157,35 @@ abc_t svpwm_sector2(alphabeta_t u_alphabeta)
     float Z = (-1.5f * v_alpha - 0.866025f * v_beta) / U_DC;
 
     /* 计算矢量作用时间 (复用预计算项) */
-    switch (sector)
-    {
-    case 1:
-        Tx = Y;
-        Ty = X;
-        break;
-    case 2:
-        Tx = -Z;
-        Ty = -Y;
-        break;
-    case 3:
-        Tx = X;
-        Ty = Z;
-        break;
-    case 4:
-        Tx = -Y;
-        Ty = -X;
-        break;
-    case 5:
-        Tx = Z;
-        Ty = Y;
-        break;
-    case 6:
-        Tx = -X;
-        Ty = -Z;
-        break;
+    switch (sector) {
+        case 1:
+            Tx = Y;
+            Ty = X;
+            break;
+        case 2:
+            Tx = -Z;
+            Ty = -Y;
+            break;
+        case 3:
+            Tx = X;
+            Ty = Z;
+            break;
+        case 4:
+            Tx = -Y;
+            Ty = -X;
+            break;
+        case 5:
+            Tx = Z;
+            Ty = Y;
+            break;
+        case 6:
+            Tx = -X;
+            Ty = -Z;
+            break;
     }
 
     /* 过调制处理 */
-    if ((Tx + Ty) > 1.0f)
-    {
+    if ((Tx + Ty) > 1.0f) {
         float k = 1.0f / (Tx + Ty);
         Tx *= k;
         Ty *= k;
@@ -203,41 +195,40 @@ abc_t svpwm_sector2(alphabeta_t u_alphabeta)
     float t0_half = (1.0f - Tx - Ty) * 0.5f;
 
     /* 根据扇区分配占空比 (中心对称分布，与sector1一致) */
-    switch (sector)
-    {
-    case 1:
-        duty.a = Tx + Ty + t0_half;
-        duty.b = Ty + t0_half;
-        duty.c = t0_half;
-        break;
-    case 2:
-        duty.a = Tx + t0_half;
-        duty.b = Tx + Ty + t0_half;
-        duty.c = t0_half;
-        break;
-    case 3:
-        duty.a = t0_half;
-        duty.b = Tx + Ty + t0_half;
-        duty.c = Ty + t0_half;
-        break;
-    case 4:
-        duty.a = t0_half;
-        duty.b = Tx + t0_half;
-        duty.c = Tx + Ty + t0_half;
-        break;
-    case 5:
-        duty.a = Ty + t0_half;
-        duty.b = t0_half;
-        duty.c = Tx + Ty + t0_half;
-        break;
-    case 6:
-        duty.a = Tx + Ty + t0_half;
-        duty.b = t0_half;
-        duty.c = Tx + t0_half;
-        break;
-    default:
-        duty.a = duty.b = duty.c = 0.5f;
-        break;
+    switch (sector) {
+        case 1:
+            duty.a = Tx + Ty + t0_half;
+            duty.b = Ty + t0_half;
+            duty.c = t0_half;
+            break;
+        case 2:
+            duty.a = Tx + t0_half;
+            duty.b = Tx + Ty + t0_half;
+            duty.c = t0_half;
+            break;
+        case 3:
+            duty.a = t0_half;
+            duty.b = Tx + Ty + t0_half;
+            duty.c = Ty + t0_half;
+            break;
+        case 4:
+            duty.a = t0_half;
+            duty.b = Tx + t0_half;
+            duty.c = Tx + Ty + t0_half;
+            break;
+        case 5:
+            duty.a = Ty + t0_half;
+            duty.b = t0_half;
+            duty.c = Tx + Ty + t0_half;
+            break;
+        case 6:
+            duty.a = Tx + Ty + t0_half;
+            duty.b = t0_half;
+            duty.c = Tx + t0_half;
+            break;
+        default:
+            duty.a = duty.b = duty.c = 0.5f;
+            break;
     }
 
     return duty;
@@ -248,8 +239,7 @@ abc_t svpwm_sector2(alphabeta_t u_alphabeta)
  * @param  u_alphabeta - αβ轴电压 (V)
  * @retval duty - 输出的三相占空比 (范围 0.0 ~ 1.0)
  */
-abc_t svpwm_minmax(alphabeta_t u_alphabeta)
-{
+abc_t svpwm_minmax(alphabeta_t u_alphabeta) {
     abc_t duty;
     float u_max, u_min, u_zero;
     float inv_half_udc = 1.0f / (U_DC * 0.5f);
@@ -263,13 +253,10 @@ abc_t svpwm_minmax(alphabeta_t u_alphabeta)
     u_abc.c *= inv_half_udc;
 
     /* 找最大最小值 */
-    if (u_abc.a > u_abc.b)
-    {
+    if (u_abc.a > u_abc.b) {
         u_max = (u_abc.a > u_abc.c) ? u_abc.a : u_abc.c;
         u_min = (u_abc.b < u_abc.c) ? u_abc.b : u_abc.c;
-    }
-    else
-    {
+    } else {
         u_max = (u_abc.b > u_abc.c) ? u_abc.b : u_abc.c;
         u_min = (u_abc.a < u_abc.c) ? u_abc.a : u_abc.c;
     }
@@ -291,7 +278,6 @@ abc_t svpwm_minmax(alphabeta_t u_alphabeta)
 }
 
 /* 默认使用扇区法 */
-abc_t svpwm_update(alphabeta_t u_alphabeta)
-{
+abc_t svpwm_update(alphabeta_t u_alphabeta) {
     return svpwm_minmax(u_alphabeta);
 }

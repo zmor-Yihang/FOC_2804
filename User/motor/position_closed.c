@@ -27,8 +27,7 @@ static float v_d_out_temp = 0.0f;
 static float v_q_out_temp = 0.0f;
 static float v_mag_temp = 0.0f;
 
-static void position_closed_callback(void)
-{
+static void position_closed_callback(void) {
     // 更新编码器角度、速度和机械多圈位置
     encoder_update();
 
@@ -71,8 +70,7 @@ static void position_closed_callback(void)
     v_mag_temp = sqrtf(v_d_out_temp * v_d_out_temp + v_q_out_temp * v_q_out_temp);
 }
 
-void positionClosed_init(float position_rad)
-{
+void positionClosed_init(float position_rad) {
     // 初始化电流环和位置环 PID 控制器，位置环使用PID模式并直接输出iq目标
     pid_init(&pid_id, PID_MODE_PI, CURRENT_PID_KP, CURRENT_PID_KI, 0.0f, CURRENT_PID_OUT_MIN, CURRENT_PID_OUT_MAX, PID_LIMIT_DISABLE);
     pid_init(&pid_iq, PID_MODE_PI, CURRENT_PID_KP, CURRENT_PID_KI, 0.0f, CURRENT_PID_OUT_MIN, CURRENT_PID_OUT_MAX, PID_LIMIT_DISABLE);
@@ -99,21 +97,32 @@ void positionClosed_init(float position_rad)
     adc_register_injectedCallback(position_closed_callback);
 }
 
-void positionClosedDebug_print_info(void)
-{
+void positionClosedDebug_print_info(void) {
     // 归一化角度到 [0, 2π) 范围
     // PLL估计电角度也归一化并转换到角度制
     float pll_angle_normalized = fmodf(pll_angle_el_temp, MATH_TWO_PI);
-    if (pll_angle_normalized < 0.0f)
-    {
+    if (pll_angle_normalized < 0.0f) {
         pll_angle_normalized += MATH_TWO_PI;
     }
     float pll_angle_deg = pll_angle_normalized * 57.2958f;
 
-    float data[20] = {position_rad_temp, target_position_rad_temp, position_error_rad_temp,
-                      speed_rpm_temp, target_speed_temp, pll_angle_deg,
-                      id_temp, iq_temp, ia_temp, ib_temp, ic_temp,
-                      v_d_pi_temp, v_q_pi_temp, v_d_ff_temp, v_q_ff_temp,
-                      v_d_out_temp, v_q_out_temp, v_mag_temp};
+    float data[20] = {position_rad_temp,
+                      target_position_rad_temp,
+                      position_error_rad_temp,
+                      speed_rpm_temp,
+                      target_speed_temp,
+                      pll_angle_deg,
+                      id_temp,
+                      iq_temp,
+                      ia_temp,
+                      ib_temp,
+                      ic_temp,
+                      v_d_pi_temp,
+                      v_q_pi_temp,
+                      v_d_ff_temp,
+                      v_q_ff_temp,
+                      v_d_out_temp,
+                      v_q_out_temp,
+                      v_mag_temp};
     vofa_send(data, 18);
 }

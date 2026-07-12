@@ -23,8 +23,7 @@ static float v_d_out_temp = 0.0f;
 static float v_q_out_temp = 0.0f;
 
 // 电流闭环模式回调
-static void current_closed_callback(void)
-{
+static void current_closed_callback(void) {
     encoder_update();
 
     // 控制使用PLL估计角度；原始角度只用于调试观察
@@ -58,8 +57,7 @@ static void current_closed_callback(void)
     v_q_out_temp = foc_current_closed_handle.v_q_out;
 }
 
-void currentClosed_init(float id, float iq)
-{
+void currentClosed_init(float id, float iq) {
     // 初始化电流环 PID 控制器
     pid_init(&pid_id, PID_MODE_PI, CURRENT_PID_KP, CURRENT_PID_KI, 0.0f, CURRENT_PID_OUT_MIN, CURRENT_PID_OUT_MAX, PID_LIMIT_DISABLE);
     pid_init(&pid_iq, PID_MODE_PI, CURRENT_PID_KP, CURRENT_PID_KI, 0.0f, CURRENT_PID_OUT_MIN, CURRENT_PID_OUT_MAX, PID_LIMIT_DISABLE); // 按电流环带宽1000Hz整定
@@ -78,24 +76,19 @@ void currentClosed_init(float id, float iq)
     adc_register_injectedCallback(current_closed_callback);
 }
 
-void currentClosedDebug_print_info(void)
-{
+void currentClosedDebug_print_info(void) {
     static uint32_t last_tick_ms = 0U;
     static uint32_t last_irq_count = 0U;
     static uint32_t last_callback_count = 0U;
 
     uint32_t now_tick_ms = HAL_GetTick();
-    if (last_tick_ms == 0U)
-    {
+    if (last_tick_ms == 0U) {
         last_tick_ms = now_tick_ms;
         last_irq_count = adcDebug_get_injectedIrqCount();
         last_callback_count = adcDebug_get_injectedCallbackCount();
-    }
-    else
-    {
+    } else {
         uint32_t delta_ms = now_tick_ms - last_tick_ms;
-        if (delta_ms >= 100U)
-        {
+        if (delta_ms >= 100U) {
             uint32_t irq_count = adcDebug_get_injectedIrqCount();
             uint32_t callback_count = adcDebug_get_injectedCallbackCount();
 
@@ -108,8 +101,7 @@ void currentClosedDebug_print_info(void)
         }
     }
 
-    float data[12] = {i_dq_temp.d, i_dq_temp.q, speed_temp, pll_angle_el_temp, adc_inj_irq_hz_temp, adc_inj_callback_hz_temp,
-                      v_d_pi_temp, v_q_pi_temp, v_d_ff_temp, v_q_ff_temp, v_d_out_temp, v_q_out_temp};
+    float data[12] = {i_dq_temp.d, i_dq_temp.q, speed_temp,  pll_angle_el_temp, adc_inj_irq_hz_temp, adc_inj_callback_hz_temp,
+                      v_d_pi_temp, v_q_pi_temp, v_d_ff_temp, v_q_ff_temp,       v_d_out_temp,        v_q_out_temp};
     vofa_send(data, 12);
 }
-

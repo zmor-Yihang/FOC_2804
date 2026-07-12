@@ -13,15 +13,13 @@
 #define ADC_INJECTED_CALLBACK_PRESCALER 2U // 注入组用户回调分频系数：1=不分频，2=2分频，3=3分频...
 
 // AB相原始采样值
-typedef struct
-{
+typedef struct {
     uint16_t ia_raw;
     uint16_t ib_raw;
 } adc_rawValues_t;
 
 // AB相零点偏移
-typedef struct
-{
+typedef struct {
     float ia_offset;
     float ib_offset;
 } adc_offset_t;
@@ -34,9 +32,9 @@ void adc_get_injectedRaw(adc_rawValues_t *values);
 void adc_register_injectedCallback(adc_injectedCallback_p callback);
 
 // 调试接口（统一使用 adc_dbg_ 前缀）
-void adcDebug_get_regularRaw(adc_rawValues_t *values); // 规则组阻塞式采样，仅调试用
-void adcDebug_get_offset(adc_offset_t *offsets);        // 获取ADC零点偏移
-uint32_t adcDebug_get_injectedIrqCount(void);           // 注入组中断触发计数器
-uint32_t adcDebug_get_injectedCallbackCount(void);      // 注入组用户ADC回调执行计数器，触发中断不一定执行回调
+void     adcDebug_get_regularRaw(adc_rawValues_t *values); // 规则组阻塞式采样，仅调试用
+void     adcDebug_get_offset(adc_offset_t *offsets);       // 获取ADC零点偏移
+uint32_t adcDebug_get_injectedIrqCount(void);              // 注入组中断触发计数器
+uint32_t adcDebug_get_injectedCallbackCount(void);         // 注入组用户ADC回调执行计数器，触发中断不一定执行回调
 
 #endif /* __ADC_H */
