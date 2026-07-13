@@ -178,15 +178,15 @@ void coggingCalib_init(cogging_calib_t *handle, float start_angle_rad) {
     memset(handle, 0, sizeof(*handle));
 
     // 初始化基本参数
-    handle->enabled = 1U;
-    handle->finished = 0U;
-    handle->repeat_count = 0U;
-    handle->index = 0U;
-    handle->tick_count = 0U;
-    handle->start_angle_rad = wrap_0_2pi(start_angle_rad);
+    handle->enabled          = 1U;
+    handle->finished         = 0U;
+    handle->repeat_count     = 0U;
+    handle->index            = 0U;
+    handle->tick_count       = 0U;
+    handle->start_angle_rad  = wrap_0_2pi(start_angle_rad);
     handle->target_angle_rad = handle->start_angle_rad;
-    handle->target_iq = 0.0f;
-    handle->state = COGGING_CALIB_STATE_SETTLING;
+    handle->target_iq        = 0.0f;
+    handle->state            = COGGING_CALIB_STATE_SETTLING;
 
     // 标定过程内部使用的位置 PD，只负责把转子拉到每个采样机械角
     pid_init(&handle->position_pd, PID_MODE_PD, COGGING_CALIB_POSITION_KP, 0.0f, COGGING_CALIB_POSITION_KD, COGGING_CALIB_POSITION_OUT_MIN, COGGING_CALIB_POSITION_OUT_MAX, PID_LIMIT_DISABLE);
@@ -222,23 +222,23 @@ uint8_t coggingCalib_update(cogging_calib_t *handle, float mech_angle_rad, uint1
     float speed_rad_s = mech_speed_rpm * (MATH_TWO_PI / 60.0f);
 
     // P项：位置误差越大，输出越大的 q 轴电流把转子拉向目标角
-    handle->position_pd.error = position_error;
+    handle->position_pd.error  = position_error;
     handle->position_pd.p_term = handle->position_pd.kp * position_error;
 
     // D项：使用负机械速度作阻尼，抑制到点过程中的过冲和振荡
     handle->position_pd.derivative = -speed_rad_s;
-    handle->position_pd.d_term = handle->position_pd.kd * handle->position_pd.derivative;
+    handle->position_pd.d_term     = handle->position_pd.kd * handle->position_pd.derivative;
 
     // I项：积分会引入历史偏置并污染齿槽电流测量，标定阶段固定不用
     handle->position_pd.i_term = 0.0f;
 
     // 对位置 PD 输出限幅，避免异常角度误差或速度反馈导致过大的 q 轴电流指令
-    float out_unclamped = handle->position_pd.p_term + handle->position_pd.d_term;
+    float out_unclamped     = handle->position_pd.p_term + handle->position_pd.d_term;
     handle->position_pd.out = utils_clampf(out_unclamped, handle->position_pd.out_min, handle->position_pd.out_max);
 
     // 将位置 PD 输出作为本周期标定电流指令，调用方会把它交给外部电流环执行
     handle->target_iq = handle->position_pd.out;
-    *target_iq = handle->target_iq;
+    *target_iq        = handle->target_iq;
 
     // 速度超限时说明转子仍处于动态过程，不能把当前 measured_iq 当作静态保持电流
     // 清零 tick_count，要求当前目标点重新经历完整的连续低速稳定时间
@@ -265,17 +265,17 @@ uint8_t coggingCalib_update(cogging_calib_t *handle, float mech_angle_rad, uint1
         // 当前机械一圈已经采完，开始统计重复采样圈数
         handle->repeat_count++;
         if (handle->repeat_count < COGGING_CALIB_REPEAT_COUNT) {
-            handle->index = 0U;
+            handle->index            = 0U;
             handle->target_angle_rad = handle->start_angle_rad;
             return 0U;
         }
 
         // 所有重复圈数完成后生成最终表，并停止输出标定保持电流
         coggingCalib_buildFinalTable(handle);
-        handle->state = COGGING_CALIB_STATE_DONE;
-        handle->finished = 1U;
+        handle->state     = COGGING_CALIB_STATE_DONE;
+        handle->finished  = 1U;
         handle->target_iq = 0.0f;
-        *target_iq = 0.0f;
+        *target_iq        = 0.0f;
         return 1U;
     }
 
@@ -315,8 +315,8 @@ void coggingCalib_getDebugData(cogging_calib_t *handle, float *data, uint16_t *l
         } else {
             // 标定进行中时，index-1 表示最近完成的目标点；这里换算到固定 raw bin 后读取临时平均值
             uint16_t debug_idx = coggingCalib_rawCountToIndex((uint16_t)(((uint32_t)(handle->index - 1U) * 4096UL) / (uint32_t)COGGING_CALIB_TABLE_SIZE));
-            data[4] = (float)coggingCalib_indexToRawCount(debug_idx);
-            data[5] = (handle->raw_count_accum[debug_idx] > 0UL) ? (handle->iq_comp_accum[debug_idx] / (float)handle->raw_count_accum[debug_idx]) : 0.0f;
+            data[4]            = (float)coggingCalib_indexToRawCount(debug_idx);
+            data[5]            = (handle->raw_count_accum[debug_idx] > 0UL) ? (handle->iq_comp_accum[debug_idx] / (float)handle->raw_count_accum[debug_idx]) : 0.0f;
         }
     } else {
         data[4] = 0.0f;

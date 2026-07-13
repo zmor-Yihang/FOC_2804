@@ -15,16 +15,16 @@ static pid_controller_t pid_id;
 static pid_controller_t pid_iq;
 
 // 上位机调试输出缓存，只保留补偿值相关量
-static float    mech_angle_temp = 0.0f;
-static float    cogging_state_temp = 0.0f;
-static float    cogging_index_temp = 0.0f;
-static float    cogging_target_angle_temp = 0.0f;
-static float    cogging_repeat_temp = 0.0f;
+static float    mech_angle_temp              = 0.0f;
+static float    cogging_state_temp           = 0.0f;
+static float    cogging_index_temp           = 0.0f;
+static float    cogging_target_angle_temp    = 0.0f;
+static float    cogging_repeat_temp          = 0.0f;
 static float    cogging_table_raw_count_temp = 0.0f;
-static float    cogging_table_iq_temp = 0.0f;
-static uint8_t  cogging_final_table_printed = 0U;
-static uint8_t  cogging_final_table_cached = 0U;
-static uint16_t cogging_final_table_size = 0U;
+static float    cogging_table_iq_temp        = 0.0f;
+static uint8_t  cogging_final_table_printed  = 0U;
+static uint8_t  cogging_final_table_cached   = 0U;
+static uint16_t cogging_final_table_size     = 0U;
 static uint16_t cogging_final_raw_count_table[COGGING_CALIB_TABLE_SIZE];
 static float    cogging_final_iq_table[COGGING_CALIB_TABLE_SIZE];
 static char     cogging_final_print_buffer[10192U];
@@ -42,10 +42,10 @@ static void cogging_calibration_mode_callback(void) {
     encoder_update();
 
     // 获取控制所需角度、速度和机械角度
-    float    angle_el = encoder_get_pllAngle() - foc_cogging_calib_handle.angle_offset;
+    float    angle_el       = encoder_get_pllAngle() - foc_cogging_calib_handle.angle_offset;
     float    speed_feedback = encoder_get_pllSpeed();
-    float    mech_angle = encoder_get_mechanicalAngle();
-    uint16_t raw_count = encoder_get_rawCount();
+    float    mech_angle     = encoder_get_mechanicalAngle();
+    uint16_t raw_count      = encoder_get_rawCount();
 
     // 获取三相电流采样值
     abc_t i_abc;
@@ -53,7 +53,7 @@ static void cogging_calibration_mode_callback(void) {
 
     // 坐标变换到 dq 轴，得到当前 q 轴电流反馈
     alphabeta_t i_alphabeta = clark_transform(i_abc);
-    dq_t        i_dq = park_transform(i_alphabeta, angle_el);
+    dq_t        i_dq        = park_transform(i_alphabeta, angle_el);
 
     // 执行标定状态机：根据目标机械角输出维持该位置所需的目标 iq
     if (coggingCalib_update(&cogging_calib_handle, mech_angle, raw_count, speed_feedback, i_dq.q, &foc_cogging_calib_handle.target_iq) != 0U) {
@@ -73,14 +73,14 @@ static void cogging_calibration_mode_callback(void) {
 
     // 读取标定器内部调试数据，提取补偿表相关字段
     float    calib_data[6] = {0};
-    uint16_t calib_len = 0U;
+    uint16_t calib_len     = 0U;
     coggingCalib_getDebugData(&cogging_calib_handle, calib_data, &calib_len);
-    cogging_state_temp = calib_data[0];
-    cogging_index_temp = calib_data[1];
-    cogging_target_angle_temp = calib_data[2];
-    cogging_repeat_temp = calib_data[3];
+    cogging_state_temp           = calib_data[0];
+    cogging_index_temp           = calib_data[1];
+    cogging_target_angle_temp    = calib_data[2];
+    cogging_repeat_temp          = calib_data[3];
     cogging_table_raw_count_temp = calib_data[4];
-    cogging_table_iq_temp = calib_data[5];
+    cogging_table_iq_temp        = calib_data[5];
 }
 
 /**
@@ -109,9 +109,9 @@ void coggingCalibrationMode_init(void) {
     float start_mech_angle = encoder_get_mechanicalAngleBlock();
     encoder_reset_mechanicalPosition(0.0f);
     coggingCalib_init(&cogging_calib_handle, start_mech_angle);
-    cogging_final_table_printed = 0U;
-    cogging_final_table_cached = 0U;
-    cogging_final_table_size = 0U;
+    cogging_final_table_printed   = 0U;
+    cogging_final_table_cached    = 0U;
+    cogging_final_table_size      = 0U;
     cogging_final_print_buffer[0] = '\0';
 
     // 注册电流环回调，进入标定运行
@@ -144,7 +144,7 @@ void coggingCalibrationModeDebug_print_info(void) {
 
         for (idx = 0U; idx < cogging_final_table_size; ++idx) {
             cogging_final_raw_count_table[idx] = coggingCalib_getRawCountByIndex(&cogging_calib_handle, idx);
-            cogging_final_iq_table[idx] = coggingCalib_getIqCompByIndex(&cogging_calib_handle, idx);
+            cogging_final_iq_table[idx]        = coggingCalib_getIqCompByIndex(&cogging_calib_handle, idx);
         }
 
         cogging_final_table_cached = 1U;

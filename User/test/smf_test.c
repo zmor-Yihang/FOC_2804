@@ -267,10 +267,10 @@ static void smf_test_done_exit(void *obj) {
 }
 
 static const struct smf_state smf_test_states[SMF_TEST_STATE_COUNT] = {
-    [SMF_TEST_STATE_ROOT] = SMF_CREATE_STATE(smf_test_root_entry, smf_test_root_run, smf_test_root_exit, NULL),
-    [SMF_TEST_STATE_IDLE] = SMF_CREATE_STATE(smf_test_idle_entry, smf_test_idle_run, smf_test_idle_exit, &smf_test_states[SMF_TEST_STATE_ROOT]),
+    [SMF_TEST_STATE_ROOT]   = SMF_CREATE_STATE(smf_test_root_entry, smf_test_root_run, smf_test_root_exit, NULL),
+    [SMF_TEST_STATE_IDLE]   = SMF_CREATE_STATE(smf_test_idle_entry, smf_test_idle_run, smf_test_idle_exit, &smf_test_states[SMF_TEST_STATE_ROOT]),
     [SMF_TEST_STATE_ACTIVE] = SMF_CREATE_STATE(smf_test_active_entry, smf_test_active_run, smf_test_active_exit, &smf_test_states[SMF_TEST_STATE_ROOT]),
-    [SMF_TEST_STATE_DONE] = SMF_CREATE_STATE(smf_test_done_entry, smf_test_done_run, smf_test_done_exit, &smf_test_states[SMF_TEST_STATE_ROOT]),
+    [SMF_TEST_STATE_DONE]   = SMF_CREATE_STATE(smf_test_done_entry, smf_test_done_run, smf_test_done_exit, &smf_test_states[SMF_TEST_STATE_ROOT]),
 };
 
 void smf_test_init(void) {
@@ -306,7 +306,7 @@ void smf_test_poll(void) {
             };
 
             smf_test.event = SMF_TEST_EVENT_PING;
-            run_result = smf_run_state(SMF_CTX(&smf_test));
+            run_result     = smf_run_state(SMF_CTX(&smf_test));
             smf_test_expect(&smf_test, "child event propagates to parent", (run_result == 0) && (smf_test.parent_handled_count == 1U) && (smf_test.root_run_count == 1U));
             smf_test_expect_trace(&smf_test, "child then parent run order", expected, ARRAY_SIZE(expected));
             smf_test_trace_reset(&smf_test);
@@ -322,7 +322,7 @@ void smf_test_poll(void) {
             };
 
             smf_test.event = SMF_TEST_EVENT_START;
-            run_result = smf_run_state(SMF_CTX(&smf_test));
+            run_result     = smf_run_state(SMF_CTX(&smf_test));
             smf_test_expect(&smf_test, "idle transitions to active",
                             (run_result == 0) && (smf_test.ctx.current == &smf_test_states[SMF_TEST_STATE_ACTIVE]) && (smf_test.ctx.previous == &smf_test_states[SMF_TEST_STATE_IDLE]));
             smf_test_expect(&smf_test, "shared parent is not re-entered", (smf_test.root_entry_count == 1U) && (smf_test.root_exit_count == 0U) && (smf_test.root_run_count == 1U));
@@ -340,7 +340,7 @@ void smf_test_poll(void) {
             };
 
             smf_test.event = SMF_TEST_EVENT_RESTART;
-            run_result = smf_run_state(SMF_CTX(&smf_test));
+            run_result     = smf_run_state(SMF_CTX(&smf_test));
             smf_test_expect(&smf_test, "self transition exits and re-enters", (run_result == 0) && (smf_test.active_exit_count == 1U) && (smf_test.active_entry_count == 2U));
             smf_test_expect_trace(&smf_test, "self transition order", expected, ARRAY_SIZE(expected));
             smf_test_trace_reset(&smf_test);
@@ -356,7 +356,7 @@ void smf_test_poll(void) {
             };
 
             smf_test.event = SMF_TEST_EVENT_COMPLETE;
-            run_result = smf_run_state(SMF_CTX(&smf_test));
+            run_result     = smf_run_state(SMF_CTX(&smf_test));
             smf_test_expect(&smf_test, "active transitions to done",
                             (run_result == 0) && (smf_test.ctx.current == &smf_test_states[SMF_TEST_STATE_DONE]) && (smf_test.ctx.previous == &smf_test_states[SMF_TEST_STATE_ACTIVE]));
             smf_test_expect_trace(&smf_test, "done transition order", expected, ARRAY_SIZE(expected));
@@ -372,9 +372,9 @@ void smf_test_poll(void) {
             uint32_t done_run_count;
             int32_t  second_run_result;
 
-            smf_test.event = SMF_TEST_EVENT_TERMINATE;
-            run_result = smf_run_state(SMF_CTX(&smf_test));
-            done_run_count = smf_test.done_run_count;
+            smf_test.event    = SMF_TEST_EVENT_TERMINATE;
+            run_result        = smf_run_state(SMF_CTX(&smf_test));
+            done_run_count    = smf_test.done_run_count;
             second_run_result = smf_run_state(SMF_CTX(&smf_test));
 
             smf_test_expect(&smf_test, "terminate value is persistent", (run_result == SMF_TEST_TERMINATE_VALUE) && (second_run_result == SMF_TEST_TERMINATE_VALUE));

@@ -1,25 +1,25 @@
 #include "foc.h"
 
 void foc_init(foc_t *handle, pid_controller_t *pid_id, pid_controller_t *pid_iq, pid_controller_t *pid_speed) {
-    handle->target_speed = 0.0f;
+    handle->target_speed    = 0.0f;
     handle->target_position = 0.0f;
-    handle->target_id = 0.0f;
-    handle->target_iq = 0.0f;
+    handle->target_id       = 0.0f;
+    handle->target_iq       = 0.0f;
 
     handle->v_d_cmd = 0.0f;
     handle->v_q_cmd = 0.0f;
     handle->v_d_out = 0.0f;
     handle->v_q_out = 0.0f;
-    handle->v_d_pi = 0.0f;
-    handle->v_q_pi = 0.0f;
-    handle->v_d_ff = 0.0f;
-    handle->v_q_ff = 0.0f;
+    handle->v_d_pi  = 0.0f;
+    handle->v_q_pi  = 0.0f;
+    handle->v_d_ff  = 0.0f;
+    handle->v_q_ff  = 0.0f;
 
-    handle->pid_id = pid_id;
-    handle->pid_iq = pid_iq;
-    handle->pid_speed = pid_speed;
+    handle->pid_id       = pid_id;
+    handle->pid_iq       = pid_iq;
+    handle->pid_speed    = pid_speed;
     handle->pid_position = NULL;
-    handle->flux_weak = NULL;
+    handle->flux_weak    = NULL;
 
     handle->duty_cycle.a = 0.0f;
     handle->duty_cycle.b = 0.0f;

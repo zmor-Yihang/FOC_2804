@@ -8,32 +8,32 @@ static pid_controller_t pid_speed;
 static pid_controller_t pid_position;
 
 // 打印用
-static float position_rad_temp = 0.0f;
+static float position_rad_temp        = 0.0f;
 static float target_position_rad_temp = 0.0f;
-static float position_error_rad_temp = 0.0f;
-static float speed_rpm_temp = 0.0f;
-static float target_speed_temp = 0.0f;
-static float pll_angle_el_temp = 0.0f;
-static float id_temp = 0.0f;
-static float iq_temp = 0.0f;
-static float ia_temp = 0.0f;
-static float ib_temp = 0.0f;
-static float ic_temp = 0.0f;
-static float v_d_pi_temp = 0.0f;
-static float v_q_pi_temp = 0.0f;
-static float v_d_ff_temp = 0.0f;
-static float v_q_ff_temp = 0.0f;
-static float v_d_out_temp = 0.0f;
-static float v_q_out_temp = 0.0f;
-static float v_mag_temp = 0.0f;
+static float position_error_rad_temp  = 0.0f;
+static float speed_rpm_temp           = 0.0f;
+static float target_speed_temp        = 0.0f;
+static float pll_angle_el_temp        = 0.0f;
+static float id_temp                  = 0.0f;
+static float iq_temp                  = 0.0f;
+static float ia_temp                  = 0.0f;
+static float ib_temp                  = 0.0f;
+static float ic_temp                  = 0.0f;
+static float v_d_pi_temp              = 0.0f;
+static float v_q_pi_temp              = 0.0f;
+static float v_d_ff_temp              = 0.0f;
+static float v_q_ff_temp              = 0.0f;
+static float v_d_out_temp             = 0.0f;
+static float v_q_out_temp             = 0.0f;
+static float v_mag_temp               = 0.0f;
 
 static void position_closed_callback(void) {
     // 更新编码器角度、速度和机械多圈位置
     encoder_update();
 
     // 控制使用PLL估计角度；编码器实测角度只用于调试观察
-    float angle_el = encoder_get_pllAngle() - foc_position_closed_handle.angle_offset;
-    float speed_feedback = encoder_get_pllSpeed();
+    float angle_el          = encoder_get_pllAngle() - foc_position_closed_handle.angle_offset;
+    float speed_feedback    = encoder_get_pllSpeed();
     float position_feedback = encoder_get_mechanicalPosition();
 
     // 获取电流反馈值
@@ -50,24 +50,24 @@ static void position_closed_callback(void) {
     loopControl_run_positionLoop(&foc_position_closed_handle, i_dq, angle_el, speed_feedback, position_feedback, FOC_POSITION_LOOP_DIVIDER);
 
     // 保存调试打印数据
-    id_temp = i_dq.d;
-    iq_temp = i_dq.q;
-    ia_temp = i_abc.a;
-    ib_temp = i_abc.b;
-    ic_temp = i_abc.c;
-    speed_rpm_temp = speed_feedback;
-    position_rad_temp = position_feedback;
+    id_temp                  = i_dq.d;
+    iq_temp                  = i_dq.q;
+    ia_temp                  = i_abc.a;
+    ib_temp                  = i_abc.b;
+    ic_temp                  = i_abc.c;
+    speed_rpm_temp           = speed_feedback;
+    position_rad_temp        = position_feedback;
     target_position_rad_temp = foc_position_closed_handle.target_position;
-    position_error_rad_temp = foc_position_closed_handle.target_position - position_feedback;
-    pll_angle_el_temp = angle_el;
-    target_speed_temp = foc_position_closed_handle.target_speed;
-    v_d_pi_temp = foc_position_closed_handle.v_d_pi;
-    v_q_pi_temp = foc_position_closed_handle.v_q_pi;
-    v_d_ff_temp = foc_position_closed_handle.v_d_ff;
-    v_q_ff_temp = foc_position_closed_handle.v_q_ff;
-    v_d_out_temp = foc_position_closed_handle.v_d_out;
-    v_q_out_temp = foc_position_closed_handle.v_q_out;
-    v_mag_temp = sqrtf(v_d_out_temp * v_d_out_temp + v_q_out_temp * v_q_out_temp);
+    position_error_rad_temp  = foc_position_closed_handle.target_position - position_feedback;
+    pll_angle_el_temp        = angle_el;
+    target_speed_temp        = foc_position_closed_handle.target_speed;
+    v_d_pi_temp              = foc_position_closed_handle.v_d_pi;
+    v_q_pi_temp              = foc_position_closed_handle.v_q_pi;
+    v_d_ff_temp              = foc_position_closed_handle.v_d_ff;
+    v_q_ff_temp              = foc_position_closed_handle.v_q_ff;
+    v_d_out_temp             = foc_position_closed_handle.v_d_out;
+    v_q_out_temp             = foc_position_closed_handle.v_q_out;
+    v_mag_temp               = sqrtf(v_d_out_temp * v_d_out_temp + v_q_out_temp * v_q_out_temp);
 }
 
 void positionClosed_init(float position_rad) {

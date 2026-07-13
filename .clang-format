@@ -53,7 +53,7 @@ IncludeCategories:
 
 # 函数参数对齐
 AlignAfterOpenBracket: Align
-AlignConsecutiveAssignments: false
+AlignConsecutiveAssignments: true
 AlignConsecutiveDeclarations: true
 AlignTrailingComments: true
 

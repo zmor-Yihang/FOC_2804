@@ -9,20 +9,20 @@ void improvedFluxObserver_init(improved_fluxobserver_t *obs, const improved_flux
     obs->cfg = cfg;
 
     obs->i_alpha = 0.0f;
-    obs->i_beta = 0.0f;
+    obs->i_beta  = 0.0f;
     obs->u_alpha = 0.0f;
-    obs->u_beta = 0.0f;
+    obs->u_beta  = 0.0f;
 
-    obs->xhat_alpha = cfg->psi_m;
-    obs->xhat_beta = 0.0f;
+    obs->xhat_alpha  = cfg->psi_m;
+    obs->xhat_beta   = 0.0f;
     obs->psi_r_alpha = cfg->psi_m;
-    obs->psi_r_beta = 0.0f;
-    obs->flux_error = 0.0f;
+    obs->psi_r_beta  = 0.0f;
+    obs->flux_error  = 0.0f;
 
-    obs->theta_est = 0.0f;
-    obs->theta_pll = 0.0f;
+    obs->theta_est   = 0.0f;
+    obs->theta_pll   = 0.0f;
     obs->speed_rad_s = 0.0f;
-    obs->speed_est = 0.0f;
+    obs->speed_est   = 0.0f;
 
     // 机械转速限幅(rpm) → 电角速度限幅(rad/s)
     obs->pll_out_limit = cfg->pll_speed_limit_rpm * MATH_TWO_PI * cfg->poles / 60.0f;
@@ -38,13 +38,13 @@ void improvedFluxObserver_set_initial_angle(improved_fluxobserver_t *obs, float 
 
     float theta = wrap_neg_pi_to_pi(theta_e0);
 
-    obs->xhat_alpha = cfg->ls * obs->i_alpha + cfg->psi_m * cosf(theta);
-    obs->xhat_beta = cfg->ls * obs->i_beta + cfg->psi_m * sinf(theta);
+    obs->xhat_alpha  = cfg->ls * obs->i_alpha + cfg->psi_m * cosf(theta);
+    obs->xhat_beta   = cfg->ls * obs->i_beta + cfg->psi_m * sinf(theta);
     obs->psi_r_alpha = cfg->psi_m * cosf(theta);
-    obs->psi_r_beta = cfg->psi_m * sinf(theta);
-    obs->flux_error = 0.0f;
-    obs->theta_est = theta;
-    obs->theta_pll = theta;
+    obs->psi_r_beta  = cfg->psi_m * sinf(theta);
+    obs->flux_error  = 0.0f;
+    obs->theta_est   = theta;
+    obs->theta_pll   = theta;
 }
 
 /**
@@ -71,23 +71,23 @@ void improvedFluxObserver_estimate(improved_fluxobserver_t *obs) {
 
     // ψ̂_r = ψ̂_s − L_s · i_αβ
     obs->psi_r_alpha = obs->xhat_alpha - cfg->ls * obs->i_alpha;
-    obs->psi_r_beta = obs->xhat_beta - cfg->ls * obs->i_beta;
+    obs->psi_r_beta  = obs->xhat_beta - cfg->ls * obs->i_beta;
 
-    float psi_r2 = obs->psi_r_alpha * obs->psi_r_alpha + obs->psi_r_beta * obs->psi_r_beta;
-    float psi_m2 = cfg->psi_m * cfg->psi_m;
+    float psi_r2     = obs->psi_r_alpha * obs->psi_r_alpha + obs->psi_r_beta * obs->psi_r_beta;
+    float psi_m2     = cfg->psi_m * cfg->psi_m;
     float flux_error = psi_m2 - psi_r2;
 
     // ψ̂_rj = ψ̂_r · e^{jπ/2}，正交相位搜索方向（Eq.(16)）
     float psi_rj_alpha = -obs->psi_r_beta;
-    float psi_rj_beta = obs->psi_r_alpha;
+    float psi_rj_beta  = obs->psi_r_alpha;
 
     // 幅值搜索方向 + 相位搜索方向，Eq.(15) 中的 (ψ̂_r + k·ψ̂_rj)
     float search_alpha = obs->psi_r_alpha + cfg->phase_gain_k * psi_rj_alpha;
-    float search_beta = obs->psi_r_beta + cfg->phase_gain_k * psi_rj_beta;
+    float search_beta  = obs->psi_r_beta + cfg->phase_gain_k * psi_rj_beta;
 
     // 电压方程开环项 y = u − R_s · i
     float y_alpha = obs->u_alpha - cfg->rs * obs->i_alpha;
-    float y_beta = obs->u_beta - cfg->rs * obs->i_beta;
+    float y_beta  = obs->u_beta - cfg->rs * obs->i_beta;
 
     // 前向 Euler 积分 Eq.(15)
     obs->xhat_alpha += cfg->ts * (y_alpha + 0.5f * cfg->observer_gain * search_alpha * flux_error);
@@ -95,12 +95,12 @@ void improvedFluxObserver_estimate(improved_fluxobserver_t *obs) {
 
     // 用更新后的 ψ̂_s 重新计算 ψ̂_r、磁链误差和角度
     obs->psi_r_alpha = obs->xhat_alpha - cfg->ls * obs->i_alpha;
-    obs->psi_r_beta = obs->xhat_beta - cfg->ls * obs->i_beta;
-    obs->flux_error = psi_m2 - (obs->psi_r_alpha * obs->psi_r_alpha + obs->psi_r_beta * obs->psi_r_beta);
-    obs->theta_est = atan2f(obs->psi_r_beta, obs->psi_r_alpha);
+    obs->psi_r_beta  = obs->xhat_beta - cfg->ls * obs->i_beta;
+    obs->flux_error  = psi_m2 - (obs->psi_r_alpha * obs->psi_r_alpha + obs->psi_r_beta * obs->psi_r_beta);
+    obs->theta_est   = atan2f(obs->psi_r_beta, obs->psi_r_alpha);
 
     // PLL 跟踪 theta_est，输出平滑角度 theta_pll 与电角速度 speed_rad_s
-    float e_theta = wrap_neg_pi_to_pi(obs->theta_est - obs->theta_pll);
+    float e_theta             = wrap_neg_pi_to_pi(obs->theta_est - obs->theta_pll);
     float speed_integral_step = cfg->pll_ki * e_theta * cfg->ts;
 
     // 条件抗饱和：达到限幅后只允许反向积分释放

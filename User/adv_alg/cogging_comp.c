@@ -27,7 +27,7 @@ float coggingComp_getIqByRawCount(uint16_t raw_count) {
 
     // scaled_pos 的整数商是 bin 索引，余数是当前 raw_count 在该 bin 内的位置
     scaled_pos = (uint32_t)raw_count * (uint32_t)COGGING_COMP_TABLE_SIZE;
-    idx_l = (uint16_t)(scaled_pos / (uint32_t)ENCODER_CPR);
+    idx_l      = (uint16_t)(scaled_pos / (uint32_t)ENCODER_CPR);
     if (idx_l >= COGGING_COMP_TABLE_SIZE) {
         idx_l = (uint16_t)(COGGING_COMP_TABLE_SIZE - 1U);
     }

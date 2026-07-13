@@ -12,16 +12,16 @@ static res_meas_t res_meas;
 
 static const res_meas_cfg_t res_meas_cfg = {
     .target_current = RES_MEAS_TARGET_CURRENT,
-    .ramp_rate = RES_MEAS_RAMP_RATE,
-    .ts = RES_MEAS_TS_S,
-    .settle_ticks = RES_MEAS_SETTLE_TICKS,
-    .sample_count = RES_MEAS_SAMPLE_COUNT,
+    .ramp_rate      = RES_MEAS_RAMP_RATE,
+    .ts             = RES_MEAS_TS_S,
+    .settle_ticks   = RES_MEAS_SETTLE_TICKS,
+    .sample_count   = RES_MEAS_SAMPLE_COUNT,
 };
 
 // 调试变量
-static float id_fb_temp = 0.0f;
-static float vd_out_temp = 0.0f;
-static float state_temp = 0.0f;
+static float id_fb_temp      = 0.0f;
+static float vd_out_temp     = 0.0f;
+static float state_temp      = 0.0f;
 static float resistance_temp = 0.0f;
 
 static void resistance_measure_callback(void) {
@@ -49,9 +49,9 @@ static void resistance_measure_callback(void) {
     resMeas_update(&res_meas, foc_res_meas_handle.v_d_out, i_dq.d);
 
     // 缓存调试数据
-    id_fb_temp = i_dq.d;
-    vd_out_temp = foc_res_meas_handle.v_d_out;
-    state_temp = (float)resMeas_get_state(&res_meas);
+    id_fb_temp      = i_dq.d;
+    vd_out_temp     = foc_res_meas_handle.v_d_out;
+    state_temp      = (float)resMeas_get_state(&res_meas);
     resistance_temp = resMeas_get_result(&res_meas);
 }
 

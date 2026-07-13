@@ -1,15 +1,15 @@
 #include "encoder.h"
 
 // 当前采样状态
-static uint16_t encoder_raw_count = 0U;        // 当前编码器原始计数(0~4095)
+static uint16_t encoder_raw_count      = 0U;   // 当前编码器原始计数(0~4095)
 static float    mech_angle_single_turn = 0.0f; // 当前机械单圈角度，用于单圈位置反馈
 
 // 机械多圈位置状态
 static float mech_position_multi_turn = 0.0f; // 当前机械多圈位置，用于多圈位置反馈
-static float mech_angle_prev = 0.0f;          // 上一次机械单圈角度(rad)
+static float mech_angle_prev          = 0.0f; // 上一次机械单圈角度(rad)
 
 // PLL估计状态
-static float elec_angle_pll = 0.0f;       /* PLL相位估计值(单位:电角度rad) */
+static float elec_angle_pll       = 0.0f; /* PLL相位估计值(单位:电角度rad) */
 static float elec_speed_pll_rad_s = 0.0f; /* PLL速度估计值(单位:电角速度rad/s) */
 
 /**
@@ -41,18 +41,18 @@ static void encoder_update_mechanicalPosition(float mech_angle) {
  * @note 编码器未通信完成时，采用预测的电角度
  */
 static float encoder_get_currentElectricalAngle(void) {
-    uint16_t raw_count = 0U;
+    uint16_t raw_count  = 0U;
     float    elec_angle = 0.0f;
 
     if (as5600_read_rawCountAsync(&raw_count) != 0U) // 编码器通信完成
     {
-        encoder_raw_count = raw_count;
+        encoder_raw_count      = raw_count;
         mech_angle_single_turn = encoder_convert_countToMechanicalAngle(raw_count); // 计算当前机械角度
-        elec_angle = mech_angle_single_turn * MOTOR_POLE_PAIRS;                     // 计算当前电角度
+        elec_angle             = mech_angle_single_turn * MOTOR_POLE_PAIRS;         // 计算当前电角度
     } else                                                                          // 编码器未通信完成，使用预测的电角度
     {
         // 用上一拍速度预测当前角度
-        elec_angle = elec_angle_pll + elec_speed_pll_rad_s * ENCODER_SPEED_SAMPLE_TIME;
+        elec_angle             = elec_angle_pll + elec_speed_pll_rad_s * ENCODER_SPEED_SAMPLE_TIME;
         mech_angle_single_turn = wrap_0_2pi(elec_angle / MOTOR_POLE_PAIRS);
     }
 
@@ -64,7 +64,7 @@ static float encoder_get_currentElectricalAngle(void) {
  * @brief 初始化编码器
  */
 void encoder_init(void) {
-    uint16_t raw_count = 0U;
+    uint16_t raw_count  = 0U;
     float    elec_angle = 0.0f;
 
     // 初始化编码器
@@ -74,12 +74,12 @@ void encoder_init(void) {
     as5600_read_rawCountBlock(&raw_count);
 
     // 给电角度和机械角度赋初值
-    encoder_raw_count = raw_count;
-    mech_angle_single_turn = encoder_convert_countToMechanicalAngle(raw_count);
-    elec_angle = wrap_0_2pi(mech_angle_single_turn * MOTOR_POLE_PAIRS);
+    encoder_raw_count        = raw_count;
+    mech_angle_single_turn   = encoder_convert_countToMechanicalAngle(raw_count);
+    elec_angle               = wrap_0_2pi(mech_angle_single_turn * MOTOR_POLE_PAIRS);
     mech_position_multi_turn = mech_angle_single_turn;
-    mech_angle_prev = mech_angle_single_turn;
-    elec_angle_pll = elec_angle;
+    mech_angle_prev          = mech_angle_single_turn;
+    elec_angle_pll           = elec_angle;
 }
 
 /**
@@ -88,7 +88,7 @@ void encoder_init(void) {
 void encoder_update(void) {
     float elec_angle = encoder_get_currentElectricalAngle(); // 获取当前电角度
 
-    float phase_error = wrap_neg_pi_to_pi(elec_angle - elec_angle_pll); // 计算当前相位误差
+    float phase_error         = wrap_neg_pi_to_pi(elec_angle - elec_angle_pll); // 计算当前相位误差
     float speed_integral_step = ENCODER_PLL_KI * phase_error * ENCODER_SPEED_SAMPLE_TIME;
 
     elec_speed_pll_rad_s += speed_integral_step;
@@ -145,8 +145,8 @@ float encoder_get_mechanicalPosition(void) {
  * @param position_rad 重置后的当前位置(rad)
  */
 void encoder_reset_mechanicalPosition(float position_rad) {
-    mech_position_multi_turn = position_rad;  // 直接设置多圈位置，避免重置时出现大跳变
-    mech_angle_prev = mech_angle_single_turn; // 设置mech_angle_prev 避免下一次更新时出现大跳变
+    mech_position_multi_turn = position_rad;           // 直接设置多圈位置，避免重置时出现大跳变
+    mech_angle_prev          = mech_angle_single_turn; // 设置mech_angle_prev 避免下一次更新时出现大跳变
 }
 
 /**
@@ -159,7 +159,7 @@ float encoder_get_mechanicalAngleBlock(void) {
 
     as5600_read_rawCountBlock(&raw_count);
 
-    encoder_raw_count = raw_count;
+    encoder_raw_count      = raw_count;
     mech_angle_single_turn = encoder_convert_countToMechanicalAngle(raw_count);
     return mech_angle_single_turn;
 }

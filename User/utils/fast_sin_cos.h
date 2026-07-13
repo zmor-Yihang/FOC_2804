@@ -87,11 +87,11 @@
  */
 static FAST_MATH_OPT inline float f1_opt(float x) {
     float u = 1.3528548e-10f;
-    u = MY_FMA(u, x, -2.4703144e-08f);
-    u = MY_FMA(u, x, 2.7532926e-06f);
-    u = MY_FMA(u, x, -0.00019840381f);
-    u = MY_FMA(u, x, 0.0083333179f);
-    u = MY_FMA(u, x, -0.16666666f);
+    u       = MY_FMA(u, x, -2.4703144e-08f);
+    u       = MY_FMA(u, x, 2.7532926e-06f);
+    u       = MY_FMA(u, x, -0.00019840381f);
+    u       = MY_FMA(u, x, 0.0083333179f);
+    u       = MY_FMA(u, x, -0.16666666f);
     return u;
 }
 
@@ -108,11 +108,11 @@ static FAST_MATH_OPT inline float f1_opt(float x) {
  */
 static FAST_MATH_OPT inline float f2_opt(float x) {
     float u = 1.7290616e-09f;
-    u = MY_FMA(u, x, -2.7093486e-07f);
-    u = MY_FMA(u, x, 2.4771643e-05f);
-    u = MY_FMA(u, x, -0.0013887906f);
-    u = MY_FMA(u, x, 0.041666519f);
-    u = MY_FMA(u, x, -0.49999991f);
+    u       = MY_FMA(u, x, -2.7093486e-07f);
+    u       = MY_FMA(u, x, 2.4771643e-05f);
+    u       = MY_FMA(u, x, -0.0013887906f);
+    u       = MY_FMA(u, x, 0.041666519f);
+    u       = MY_FMA(u, x, -0.49999991f);
     return u;
 }
 
@@ -131,13 +131,13 @@ static FAST_MATH_OPT inline float f2_opt(float x) {
 FAST_MATH_OPT static inline float reduce_payne_hanek(float x, int *quadrant) {
     // q = round(x / PI)
     // 使用 rintf 或 nearbyintf 比 (int) 转换更精确，能归约到中心区间
-    float qf = rintf(x * M_1_PI_F);
+    float qf  = rintf(x * M_1_PI_F);
     *quadrant = (int)qf;
 
     // x = x - q * PI (高精度分步减法)
     // 这一步解决了大数输入的精度丢失问题
     float r = MY_FMA(qf, -PI_A, x);
-    r = MY_FMA(qf, -PI_B, r);
+    r       = MY_FMA(qf, -PI_B, r);
     return r;
 }
 
@@ -157,7 +157,7 @@ FAST_MATH_OPT static inline float fast_sin(float x) {
     x = reduce_payne_hanek(x, &q);
 
     // 计算 sin(x) ~= x + x^3 * f1(x^2)
-    float x2 = x * x;
+    float x2     = x * x;
     float result = MY_FMA(x * x2, f1_opt(x2), x);
 
     // 符号处理 (Branchless): sin(x + k*PI) = sin(x) * (-1)^k
@@ -184,7 +184,7 @@ FAST_MATH_OPT static inline float fast_cos(float x) {
     x = reduce_payne_hanek(x, &q);
 
     // 计算 cos(x)
-    float x2 = x * x;
+    float x2     = x * x;
     float result = MY_FMA(x2, f2_opt(x2), 1.0f);
 
     // 符号处理 (Branchless): cos(x + k*PI) = cos(x) * (-1)^k

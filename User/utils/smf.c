@@ -169,7 +169,7 @@ static bool smf_execute_ancestor_run_actions(struct smf_ctx *const ctx) {
  * @return true if the state machine should terminate, else false
  */
 static bool smf_execute_all_exit_actions(struct smf_ctx *const ctx, const struct smf_state *topmost) {
-    struct internal_ctx *const internal = (void *)&ctx->internal;
+    struct internal_ctx *const internal  = (void *)&ctx->internal;
     const struct smf_state    *tmp_state = ctx->executing;
 
     for (const struct smf_state *to_execute = ctx->current; to_execute != NULL && to_execute != topmost; to_execute = to_execute->parent) {
@@ -199,16 +199,16 @@ static bool smf_execute_all_exit_actions(struct smf_ctx *const ctx, const struct
 static void smf_clear_internal_state(struct smf_ctx *const ctx) {
     struct internal_ctx *const internal = (void *)&ctx->internal;
 
-    internal->is_exit = false;
+    internal->is_exit   = false;
     internal->terminate = false;
-    internal->handled = false;
+    internal->handled   = false;
     internal->new_state = false;
 }
 
 void smf_set_initial(struct smf_ctx *const ctx, const struct smf_state *init_state) {
     smf_clear_internal_state(ctx);
-    ctx->current = init_state;
-    ctx->previous = NULL;
+    ctx->current       = init_state;
+    ctx->previous      = NULL;
     ctx->terminate_val = 0;
 
     struct internal_ctx *const internal = (void *)&ctx->internal;
@@ -271,7 +271,7 @@ void smf_set_state(struct smf_ctx *const ctx, const struct smf_state *new_state)
         topmost = get_lca_of(ctx->executing, new_state);
     }
 
-    internal->is_exit = true;
+    internal->is_exit   = true;
     internal->new_state = true;
 
     /* call all exit actions up to (but not including) the topmost */
@@ -303,8 +303,8 @@ void smf_set_state(struct smf_ctx *const ctx, const struct smf_state *new_state)
     }
 
     /* update the state variables */
-    ctx->previous = ctx->current;
-    ctx->current = new_state;
+    ctx->previous  = ctx->current;
+    ctx->current   = new_state;
     ctx->executing = new_state;
 
     /* call all entry actions (except those of topmost) */
@@ -318,7 +318,7 @@ void smf_set_terminate(struct smf_ctx *const ctx, int32_t val) {
     struct internal_ctx *const internal = (void *)&ctx->internal;
 
     internal->terminate = true;
-    ctx->terminate_val = val;
+    ctx->terminate_val  = val;
 }
 
 int32_t smf_run_state(struct smf_ctx *const ctx) {

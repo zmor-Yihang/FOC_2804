@@ -6,7 +6,7 @@ _fff_init(fifo_uart_tx);                                // 初始化FIFO
 
 /* DMA发送临时缓冲区 */
 static uint8_t           tx_dma_buf[TX_DMA_BUF_SIZE];
-static volatile uint8_t  tx_dma_busy = 0;
+static volatile uint8_t  tx_dma_busy       = 0;
 static volatile uint32_t tx_overflow_count = 0; // 溢出计数器
 
 /* 启动DMA发送 */
@@ -96,57 +96,57 @@ void usart_init(void) {
     __HAL_RCC_DMA1_CLK_ENABLE();
 
     /* 配置USART2 TX引脚PA2为复用推挽输出模式 */
-    gpio_init_struct.Pin = GPIO_PIN_2;
-    gpio_init_struct.Mode = GPIO_MODE_AF_PP;
-    gpio_init_struct.Pull = GPIO_NOPULL;
-    gpio_init_struct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+    gpio_init_struct.Pin       = GPIO_PIN_2;
+    gpio_init_struct.Mode      = GPIO_MODE_AF_PP;
+    gpio_init_struct.Pull      = GPIO_NOPULL;
+    gpio_init_struct.Speed     = GPIO_SPEED_FREQ_VERY_HIGH;
     gpio_init_struct.Alternate = GPIO_AF7_USART2; /* 配置复用功能为USART2 */
     HAL_GPIO_Init(GPIOA, &gpio_init_struct);
 
     /* 配置USART2 RX引脚PA3为复用推挽输出模式 */
-    gpio_init_struct.Pin = GPIO_PIN_3;
-    gpio_init_struct.Mode = GPIO_MODE_AF_PP;
-    gpio_init_struct.Pull = GPIO_NOPULL;
+    gpio_init_struct.Pin       = GPIO_PIN_3;
+    gpio_init_struct.Mode      = GPIO_MODE_AF_PP;
+    gpio_init_struct.Pull      = GPIO_NOPULL;
     gpio_init_struct.Alternate = GPIO_AF7_USART2;
     HAL_GPIO_Init(GPIOA, &gpio_init_struct);
 
     /* 初始化UART参数 */
-    huart2.Instance = USART2;                                     /* 指定USART2外设 */
-    huart2.Init.BaudRate = 1152000;                               /* 波特率1152000 */
-    huart2.Init.WordLength = UART_WORDLENGTH_8B;                  /* 8位数据位 */
-    huart2.Init.StopBits = UART_STOPBITS_1;                       /* 1位停止位 */
-    huart2.Init.Parity = UART_PARITY_NONE;                        /* 无校验 */
-    huart2.Init.Mode = UART_MODE_TX_RX;                           /* 发送+接收模式 */
-    huart2.Init.HwFlowCtl = UART_HWCONTROL_NONE;                  /* 无硬件流控 */
-    huart2.Init.OverSampling = UART_OVERSAMPLING_16;              /* 16倍过采样 */
-    huart2.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;     /* 1位采样 */
-    huart2.Init.ClockPrescaler = UART_PRESCALER_DIV1;             /* 时钟分频器为1 */
-    huart2.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT; /* 无高级功能初始化 */
-    HAL_UART_Init(&huart2);                                       /* 初始化UART2 */
+    huart2.Instance                    = USART2;                      /* 指定USART2外设 */
+    huart2.Init.BaudRate               = 1152000;                     /* 波特率1152000 */
+    huart2.Init.WordLength             = UART_WORDLENGTH_8B;          /* 8位数据位 */
+    huart2.Init.StopBits               = UART_STOPBITS_1;             /* 1位停止位 */
+    huart2.Init.Parity                 = UART_PARITY_NONE;            /* 无校验 */
+    huart2.Init.Mode                   = UART_MODE_TX_RX;             /* 发送+接收模式 */
+    huart2.Init.HwFlowCtl              = UART_HWCONTROL_NONE;         /* 无硬件流控 */
+    huart2.Init.OverSampling           = UART_OVERSAMPLING_16;        /* 16倍过采样 */
+    huart2.Init.OneBitSampling         = UART_ONE_BIT_SAMPLE_DISABLE; /* 1位采样 */
+    huart2.Init.ClockPrescaler         = UART_PRESCALER_DIV1;         /* 时钟分频器为1 */
+    huart2.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;     /* 无高级功能初始化 */
+    HAL_UART_Init(&huart2);                                           /* 初始化UART2 */
 
     /* 配置DMA参数用于USART2 TX */
-    hdma_usart2_tx.Instance = DMA1_Channel1;                       /* 指定DMA1通道1 */
-    hdma_usart2_tx.Init.Request = DMA_REQUEST_USART2_TX;           /* 关联USART2发送请求 */
-    hdma_usart2_tx.Init.Direction = DMA_MEMORY_TO_PERIPH;          /* 内存到外设 */
-    hdma_usart2_tx.Init.PeriphInc = DMA_PINC_DISABLE;              /* 外设地址不自增 */
-    hdma_usart2_tx.Init.MemInc = DMA_MINC_ENABLE;                  /* 内存地址自增 */
-    hdma_usart2_tx.Init.PeriphDataAlignment = DMA_PDATAALIGN_BYTE; /* 外设字节对齐 */
-    hdma_usart2_tx.Init.MemDataAlignment = DMA_MDATAALIGN_BYTE;    /* 内存字节对齐 */
-    hdma_usart2_tx.Init.Mode = DMA_NORMAL;                         /* 正常模式 */
-    hdma_usart2_tx.Init.Priority = DMA_PRIORITY_HIGH;              /* 高优先级 */
-    HAL_DMA_Init(&hdma_usart2_tx);                                 /* 初始化DMA */
+    hdma_usart2_tx.Instance                 = DMA1_Channel1;         /* 指定DMA1通道1 */
+    hdma_usart2_tx.Init.Request             = DMA_REQUEST_USART2_TX; /* 关联USART2发送请求 */
+    hdma_usart2_tx.Init.Direction           = DMA_MEMORY_TO_PERIPH;  /* 内存到外设 */
+    hdma_usart2_tx.Init.PeriphInc           = DMA_PINC_DISABLE;      /* 外设地址不自增 */
+    hdma_usart2_tx.Init.MemInc              = DMA_MINC_ENABLE;       /* 内存地址自增 */
+    hdma_usart2_tx.Init.PeriphDataAlignment = DMA_PDATAALIGN_BYTE;   /* 外设字节对齐 */
+    hdma_usart2_tx.Init.MemDataAlignment    = DMA_MDATAALIGN_BYTE;   /* 内存字节对齐 */
+    hdma_usart2_tx.Init.Mode                = DMA_NORMAL;            /* 正常模式 */
+    hdma_usart2_tx.Init.Priority            = DMA_PRIORITY_HIGH;     /* 高优先级 */
+    HAL_DMA_Init(&hdma_usart2_tx);                                   /* 初始化DMA */
 
     /* 配置DMA参数用于USART2 RX */
-    hdma_usart2_rx.Instance = DMA1_Channel2;                       /* 指定DMA1通道2 */
-    hdma_usart2_rx.Init.Request = DMA_REQUEST_USART2_RX;           /* 关联USART2接收请求 */
-    hdma_usart2_rx.Init.Direction = DMA_PERIPH_TO_MEMORY;          /* 外设到内存 */
-    hdma_usart2_rx.Init.PeriphInc = DMA_PINC_DISABLE;              /* 外设地址不自增 */
-    hdma_usart2_rx.Init.MemInc = DMA_MINC_ENABLE;                  /* 内存地址自增 */
-    hdma_usart2_rx.Init.PeriphDataAlignment = DMA_PDATAALIGN_BYTE; /* 外设字节对齐 */
-    hdma_usart2_rx.Init.MemDataAlignment = DMA_MDATAALIGN_BYTE;    /* 内存字节对齐 */
-    hdma_usart2_rx.Init.Mode = DMA_CIRCULAR;                       /* 循环模式 */
-    hdma_usart2_rx.Init.Priority = DMA_PRIORITY_HIGH;              /* 高优先级 */
-    HAL_DMA_Init(&hdma_usart2_rx);                                 /* 初始化DMA */
+    hdma_usart2_rx.Instance                 = DMA1_Channel2;         /* 指定DMA1通道2 */
+    hdma_usart2_rx.Init.Request             = DMA_REQUEST_USART2_RX; /* 关联USART2接收请求 */
+    hdma_usart2_rx.Init.Direction           = DMA_PERIPH_TO_MEMORY;  /* 外设到内存 */
+    hdma_usart2_rx.Init.PeriphInc           = DMA_PINC_DISABLE;      /* 外设地址不自增 */
+    hdma_usart2_rx.Init.MemInc              = DMA_MINC_ENABLE;       /* 内存地址自增 */
+    hdma_usart2_rx.Init.PeriphDataAlignment = DMA_PDATAALIGN_BYTE;   /* 外设字节对齐 */
+    hdma_usart2_rx.Init.MemDataAlignment    = DMA_MDATAALIGN_BYTE;   /* 内存字节对齐 */
+    hdma_usart2_rx.Init.Mode                = DMA_CIRCULAR;          /* 循环模式 */
+    hdma_usart2_rx.Init.Priority            = DMA_PRIORITY_HIGH;     /* 高优先级 */
+    HAL_DMA_Init(&hdma_usart2_rx);                                   /* 初始化DMA */
 
     /* 将DMA句柄与UART句柄进行关联 */
     __HAL_LINKDMA(&huart2, hdmatx, hdma_usart2_tx);

@@ -13,7 +13,7 @@ abc_t svpwm_sector1(alphabeta_t u_alphabeta) {
     float t1, t2, t0_half;
 
     float v_alpha = u_alphabeta.alpha;
-    float v_beta = u_alphabeta.beta;
+    float v_beta  = u_alphabeta.beta;
 
     /* 计算参考电压矢量在三个轴上的投影 */
     u1 = v_beta;
@@ -120,7 +120,7 @@ abc_t svpwm_sector2(alphabeta_t u_alphabeta) {
     float   Tx = 0.0f, Ty = 0.0f;
 
     float v_alpha = u_alphabeta.alpha;
-    float v_beta = u_alphabeta.beta;
+    float v_beta  = u_alphabeta.beta;
 
     /* 扇区判断 */
     if (v_beta > 0.0f)

@@ -7,8 +7,8 @@
 #define TIM_SYNC_TEST_SUMMARY_SAMPLES (512U)
 
 static uint32_t tim_sync_calc_signed_diff(uint32_t cnt_master, uint32_t cnt_slave) {
-    int32_t diff = (int32_t)cnt_slave - (int32_t)cnt_master;
-    int32_t period = (int32_t)TIM1_PERIOD;
+    int32_t diff      = (int32_t)cnt_slave - (int32_t)cnt_master;
+    int32_t period    = (int32_t)TIM1_PERIOD;
     int32_t full_span = period * 2;
 
     if (diff > period) {
@@ -26,16 +26,16 @@ void tim_sync_test_init(void) {
 }
 
 void tim_sync_test_poll(void) {
-    static uint32_t sample_count = 0;
-    static int32_t  diff_min = INT32_MAX;
-    static int32_t  diff_max = INT32_MIN;
-    static int64_t  diff_sum = 0;
+    static uint32_t sample_count       = 0;
+    static int32_t  diff_min           = INT32_MAX;
+    static int32_t  diff_max           = INT32_MIN;
+    static int64_t  diff_sum           = 0;
     static uint32_t dir_mismatch_count = 0;
-    uint32_t        cnt_tim2 = __HAL_TIM_GET_COUNTER(&htim2);
-    uint32_t        cnt_tim3 = __HAL_TIM_GET_COUNTER(&htim3);
-    uint32_t        dir_tim2 = __HAL_TIM_IS_TIM_COUNTING_DOWN(&htim2) ? 1U : 0U;
-    uint32_t        dir_tim3 = __HAL_TIM_IS_TIM_COUNTING_DOWN(&htim3) ? 1U : 0U;
-    int32_t         diff = (int32_t)tim_sync_calc_signed_diff(cnt_tim2, cnt_tim3);
+    uint32_t        cnt_tim2           = __HAL_TIM_GET_COUNTER(&htim2);
+    uint32_t        cnt_tim3           = __HAL_TIM_GET_COUNTER(&htim3);
+    uint32_t        dir_tim2           = __HAL_TIM_IS_TIM_COUNTING_DOWN(&htim2) ? 1U : 0U;
+    uint32_t        dir_tim3           = __HAL_TIM_IS_TIM_COUNTING_DOWN(&htim3) ? 1U : 0U;
+    int32_t         diff               = (int32_t)tim_sync_calc_signed_diff(cnt_tim2, cnt_tim3);
     float           debug_data[5];
 
     debug_data[0] = (float)cnt_tim2;
@@ -67,10 +67,10 @@ void tim_sync_test_poll(void) {
            dir_tim2 ? "down" : "up", dir_tim3 ? "down" : "up");
 
     if (sample_count >= TIM_SYNC_TEST_SUMMARY_SAMPLES) {
-        sample_count = 0;
-        diff_min = INT32_MAX;
-        diff_max = INT32_MIN;
-        diff_sum = 0;
+        sample_count       = 0;
+        diff_min           = INT32_MAX;
+        diff_max           = INT32_MIN;
+        diff_sum           = 0;
         dir_mismatch_count = 0;
     }
 }

@@ -12,24 +12,24 @@ static fluxobserver_t flux_observer; // 观测器句柄
 
 // 观测器配置结构体
 static const fluxobserver_cfg_t flux_observer_cfg = {
-    .rs = MOTOR_RS_Ω,
-    .ls = 0.5f * (MOTOR_LD_H + MOTOR_LQ_H),
-    .psi_m = MOTOR_PSI_F,
-    .poles = MOTOR_POLE_PAIRS,
-    .ts = FLUX_OBSERVER_TS_S,
-    .gamma = FLUX_OBSERVER_GAMMA,
-    .pll_kp = FLUX_OBSERVER_PLL_KP,
-    .pll_ki = FLUX_OBSERVER_PLL_KI,
+    .rs                  = MOTOR_RS_Ω,
+    .ls                  = 0.5f * (MOTOR_LD_H + MOTOR_LQ_H),
+    .psi_m               = MOTOR_PSI_F,
+    .poles               = MOTOR_POLE_PAIRS,
+    .ts                  = FLUX_OBSERVER_TS_S,
+    .gamma               = FLUX_OBSERVER_GAMMA,
+    .pll_kp              = FLUX_OBSERVER_PLL_KP,
+    .pll_ki              = FLUX_OBSERVER_PLL_KI,
     .pll_speed_limit_rpm = FLUX_OBSERVER_PLL_SPEED_LIMIT_RPM,
 };
 
 // 打印用（速度、角度、磁链）
-static float speed_rpm_temp = 0.0f;
-static float speed_obs_rpm_temp = 0.0f;
-static float angle_encoder_temp = 0.0f;
+static float speed_rpm_temp      = 0.0f;
+static float speed_obs_rpm_temp  = 0.0f;
+static float angle_encoder_temp  = 0.0f;
 static float angle_observer_temp = 0.0f;
-static float flux_angle_temp = 0.0f;
-static float flux_linkage_temp = 0.0f;
+static float flux_angle_temp     = 0.0f;
+static float flux_linkage_temp   = 0.0f;
 
 static void fluxObserver_closed_callback(void) {
     // 更新编码器状态
@@ -44,7 +44,7 @@ static void fluxObserver_closed_callback(void) {
 
     // 更新观测器输入：电流与上一控制周期输出电压
     flux_observer.i_alpha = i_alphabeta.alpha;
-    flux_observer.i_beta = i_alphabeta.beta;
+    flux_observer.i_beta  = i_alphabeta.beta;
     fluxObserver_estimate(&flux_observer);
 
     // 调试对比：保留编码器反馈
@@ -52,7 +52,7 @@ static void fluxObserver_closed_callback(void) {
     float speed_encoder = encoder_get_pllSpeed();
 
     // 控制反馈角度与速度：改用观测器输出
-    float angle_el = wrap_neg_pi_to_pi(fluxObserver_get_angle(&flux_observer));
+    float angle_el       = wrap_neg_pi_to_pi(fluxObserver_get_angle(&flux_observer));
     float speed_feedback = fluxObserver_get_speed(&flux_observer);
 
     float angle_observer = angle_el;
@@ -66,16 +66,16 @@ static void fluxObserver_closed_callback(void) {
 
     // 将当前周期输出电压写回观测器，供下一周期估算使用
     alphabeta_t u_alphabeta = ipark_transform((dq_t){.d = foc_fluxObserver_handle.v_d_out, .q = foc_fluxObserver_handle.v_q_out}, angle_el);
-    flux_observer.u_alpha = u_alphabeta.alpha;
-    flux_observer.u_beta = u_alphabeta.beta;
+    flux_observer.u_alpha   = u_alphabeta.alpha;
+    flux_observer.u_beta    = u_alphabeta.beta;
 
     // 保存调试数据（速度、角度、磁链）
-    speed_rpm_temp = speed_encoder;
-    speed_obs_rpm_temp = speed_observer;
-    angle_encoder_temp = angle_encoder;
+    speed_rpm_temp      = speed_encoder;
+    speed_obs_rpm_temp  = speed_observer;
+    angle_encoder_temp  = angle_encoder;
     angle_observer_temp = angle_observer;
-    flux_angle_temp = wrap_neg_pi_to_pi(flux_observer.theta_est);
-    flux_linkage_temp = sqrtf(flux_observer.xhat_alpha * flux_observer.xhat_alpha + flux_observer.xhat_beta * flux_observer.xhat_beta);
+    flux_angle_temp     = wrap_neg_pi_to_pi(flux_observer.theta_est);
+    flux_linkage_temp   = sqrtf(flux_observer.xhat_alpha * flux_observer.xhat_alpha + flux_observer.xhat_beta * flux_observer.xhat_beta);
 }
 
 void fluxObseverClosed_init(float speed_rpm) {
@@ -99,7 +99,7 @@ void fluxObseverClosed_init(float speed_rpm) {
 
     // 初始电压置零
     flux_observer.u_alpha = 0.0f;
-    flux_observer.u_beta = 0.0f;
+    flux_observer.u_beta  = 0.0f;
 
     // 注册回调函数
     adc_register_injectedCallback(fluxObserver_closed_callback);
@@ -107,9 +107,9 @@ void fluxObseverClosed_init(float speed_rpm) {
 
 void fluxObseverClosedDebug_print_info(void) {
     // 角度统一转换为角度制
-    float angle_encoder_deg = wrap_0_2pi(angle_encoder_temp) * 57.2958f;
+    float angle_encoder_deg  = wrap_0_2pi(angle_encoder_temp) * 57.2958f;
     float angle_observer_deg = wrap_0_2pi(angle_observer_temp) * 57.2958f;
-    float flux_angle_deg = wrap_0_2pi(flux_angle_temp) * 57.2958f;
+    float flux_angle_deg     = wrap_0_2pi(flux_angle_temp) * 57.2958f;
 
     float data[6] = {speed_rpm_temp, speed_obs_rpm_temp, angle_encoder_deg, angle_observer_deg, flux_angle_deg, flux_linkage_temp};
     vofa_send(data, 6);

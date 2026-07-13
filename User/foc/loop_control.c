@@ -38,18 +38,18 @@ void loopControl_run_currentLoop(foc_t *handle, dq_t i_dq, float angle_el, float
     v_d_unsat = v_d_pi + v_d_ff;
     v_q_unsat = v_q_pi + v_q_ff;
 
-    handle->v_d_pi = v_d_pi;
-    handle->v_q_pi = v_q_pi;
-    handle->v_d_ff = v_d_ff;
-    handle->v_q_ff = v_q_ff;
+    handle->v_d_pi  = v_d_pi;
+    handle->v_q_pi  = v_q_pi;
+    handle->v_d_ff  = v_d_ff;
+    handle->v_q_ff  = v_q_ff;
     handle->v_d_cmd = v_d_unsat;
     handle->v_q_cmd = v_q_unsat;
     handle->v_d_out = v_d_unsat;
     handle->v_q_out = v_q_unsat;
 
     /* dq 电压矢量联合限幅，参考 VESC 开源代码 */
-    float v_limit = U_DC * FOC_VOLTAGE_LIMIT_SVPWM_SCALE;
-    float v_mag_sq = handle->v_d_out * handle->v_d_out + handle->v_q_out * handle->v_q_out;
+    float v_limit    = U_DC * FOC_VOLTAGE_LIMIT_SVPWM_SCALE;
+    float v_mag_sq   = handle->v_d_out * handle->v_d_out + handle->v_q_out * handle->v_q_out;
     float v_limit_sq = v_limit * v_limit;
 
     if (v_mag_sq > v_limit_sq) {
@@ -63,7 +63,7 @@ void loopControl_run_currentLoop(foc_t *handle, dq_t i_dq, float angle_el, float
 
     /* 逆 Park 变换后交由输出层完成调制与PWM下发 */
     alphabeta_t v_alphabeta = ipark_transform((dq_t){.d = handle->v_d_out, .q = handle->v_q_out}, angle_el);
-    handle->duty_cycle = gateDrive_set_voltage(v_alphabeta);
+    handle->duty_cycle      = gateDrive_set_voltage(v_alphabeta);
 }
 
 /**
@@ -79,9 +79,9 @@ void loopControl_run_speedLoop(foc_t *handle, dq_t i_dq, float angle_el, float s
 
     /* 速度环按分频执行，其他周期保持上一次 iq 目标 */
     if (++speed_loop_div >= speed_loop_divider) {
-        speed_loop_div = 0;
+        speed_loop_div      = 0;
         float speed_loop_dt = FOC_CURRENT_LOOP_DT_S * (float)speed_loop_divider;
-        handle->target_iq = pid_calculate(handle->pid_speed, handle->target_speed, speed_rpm, speed_loop_dt);
+        handle->target_iq   = pid_calculate(handle->pid_speed, handle->target_speed, speed_rpm, speed_loop_dt);
     }
 
     handle->target_id = 0.0f;
@@ -104,35 +104,35 @@ void loopControl_run_positionLoop(foc_t *handle, dq_t i_dq, float angle_el, floa
 
     /* 位置环按分频执行，未到执行周期时保持上一次 target_iq */
     if (++position_loop_div >= position_loop_divider) {
-        pid_controller_t *pid = handle->pid_position;
+        pid_controller_t *pid              = handle->pid_position;
         float             position_loop_dt = FOC_CURRENT_LOOP_DT_S * (float)position_loop_divider;
         float             position_error;
         float             position_speed_rad_s;
         float             integral_increment;
         float             out_unclamped;
 
-        position_loop_div = 0; // 复位分频计数器
-        position_error = handle->target_position - position_rad;
+        position_loop_div    = 0; // 复位分频计数器
+        position_error       = handle->target_position - position_rad;
         position_speed_rad_s = speed_rpm * (MATH_TWO_PI / 60.0f); // PLL机械速度，单位 rad/s
 
         /* P项：由位置误差决定基础转矩请求 */
-        pid->error = position_error;
+        pid->error  = position_error;
         pid->p_term = pid->kp * pid->error;
 
         /* I项：累积位置误差，消除恒定负载下的稳态误差 */
         integral_increment = (pid->kp * pid->ki * pid->error - pid->kt * pid->backcalc_error) * position_loop_dt;
         pid->integral += integral_increment;
         pid->integral = utils_clampf(pid->integral, -pid->integral_max, pid->integral_max);
-        pid->i_term = pid->integral;
+        pid->i_term   = pid->integral;
 
         /* D项继续取负的反馈速度，保留原有阻尼特性并避免目标阶跃微分冲击 */
         pid->derivative = -position_speed_rad_s;
-        pid->d_term = pid->kd * pid->derivative;
+        pid->d_term     = pid->kd * pid->derivative;
 
-        out_unclamped = pid->p_term + pid->i_term + pid->d_term;
-        pid->out = utils_clampf(out_unclamped, pid->out_min, pid->out_max);
+        out_unclamped       = pid->p_term + pid->i_term + pid->d_term;
+        pid->out            = utils_clampf(out_unclamped, pid->out_min, pid->out_max);
         pid->backcalc_error = out_unclamped - pid->out;
-        pid->prev_error = pid->error;
+        pid->prev_error     = pid->error;
 
         /* 位置环直接给电流环 q 轴电流目标 */
         handle->target_iq = pid->out;
@@ -159,8 +159,8 @@ void loopControl_run_speedWeakLoop(foc_t *handle, dq_t i_dq, float angle_el, flo
     /* 速度环按分频执行，其他周期保持上一次 iq 目标 */
     if (++speed_loop_div >= speed_loop_divider) {
         float speed_loop_dt = FOC_CURRENT_LOOP_DT_S * (float)speed_loop_divider;
-        speed_loop_div = 0;
-        handle->target_iq = pid_calculate(handle->pid_speed, handle->target_speed, speed_rpm, speed_loop_dt);
+        speed_loop_div      = 0;
+        handle->target_iq   = pid_calculate(handle->pid_speed, handle->target_speed, speed_rpm, speed_loop_dt);
     }
 
     if (handle->flux_weak != NULL) {

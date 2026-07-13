@@ -17,34 +17,34 @@ static uint8_t indMeas_config_is_valid(const ind_meas_cfg_t *cfg) {
 
 /* 将一次测量的运行状态和结果复位；该函数不修改已绑定的 cfg 配置指针。 */
 static void indMeas_clear(ind_meas_t *im) {
-    im->state = IND_MEAS_IDLE;
-    im->fault = IND_MEAS_FAULT_NONE;
-    im->axis = IND_MEAS_AXIS_D;
+    im->state    = IND_MEAS_IDLE;
+    im->fault    = IND_MEAS_FAULT_NONE;
+    im->axis     = IND_MEAS_AXIS_D;
     im->polarity = 1;
 
     im->tick_counter = 0U;
-    im->pair_count = 0U;
+    im->pair_count   = 0U;
 
     im->start_current = 0.0f;
-    im->v_d_ref = 0.0f;
-    im->v_q_ref = 0.0f;
+    im->v_d_ref       = 0.0f;
+    im->v_q_ref       = 0.0f;
 
-    im->sum_ld = 0.0f;
-    im->sum_lq = 0.0f;
+    im->sum_ld          = 0.0f;
+    im->sum_lq          = 0.0f;
     im->valid_d_samples = 0U;
     im->valid_q_samples = 0U;
 
-    im->current_delta_sum = 0.0f;
+    im->current_delta_sum     = 0.0f;
     im->current_delta_samples = 0U;
 
-    im->ld = 0.0f;
-    im->lq = 0.0f;
-    im->inductance = 0.0f;
-    im->ld_lq_diff = 0.0f;
+    im->ld           = 0.0f;
+    im->lq           = 0.0f;
+    im->inductance   = 0.0f;
+    im->ld_lq_diff   = 0.0f;
     im->current_used = 0.0f;
 
     im->last_delta_current = 0.0f;
-    im->last_l_sample = 0.0f;
+    im->last_l_sample      = 0.0f;
 }
 
 /* 空闲、完成和故障时始终撤销注入电压，避免电机继续受控激励。 */
@@ -87,11 +87,11 @@ static void indMeas_finish(ind_meas_t *im) {
 
     /* 双轴模式以 Ld/Lq 的算术平均值作为总电感，并保留凸极差值供上层使用。 */
     if (im->cfg->measure_q_axis != 0U) {
-        im->lq = im->sum_lq / (float)im->valid_q_samples;
+        im->lq         = im->sum_lq / (float)im->valid_q_samples;
         im->inductance = 0.5f * (im->ld + im->lq);
         im->ld_lq_diff = im->lq - im->ld;
     } else {
-        im->lq = im->ld;
+        im->lq         = im->ld;
         im->inductance = im->ld;
         im->ld_lq_diff = 0.0f;
     }
@@ -115,7 +115,7 @@ static void indMeas_next_pulse(ind_meas_t *im) {
 
     if (im->polarity > 0) {
         im->polarity = -1;
-        im->state = IND_MEAS_REST;
+        im->state    = IND_MEAS_REST;
         return;
     }
 
@@ -128,9 +128,9 @@ static void indMeas_next_pulse(ind_meas_t *im) {
     }
 
     if ((im->axis == IND_MEAS_AXIS_D) && (im->cfg->measure_q_axis != 0U)) {
-        im->axis = IND_MEAS_AXIS_Q;
+        im->axis       = IND_MEAS_AXIS_Q;
         im->pair_count = 0U;
-        im->state = IND_MEAS_REST;
+        im->state      = IND_MEAS_REST;
         return;
     }
 
@@ -143,7 +143,7 @@ static void indMeas_next_pulse(ind_meas_t *im) {
  * 小电流变化、非有限值或负电感均视为无效样本，不参与均值计算。
  */
 static void indMeas_accumulate_sample(ind_meas_t *im, float end_current) {
-    float delta_i = end_current - im->start_current;
+    float delta_i     = end_current - im->start_current;
     float abs_delta_i = fabsf(delta_i);
     /* 即使样本被拒绝也保留本次 Δi，便于上层定位阈值或采样时序问题。 */
     im->last_delta_current = delta_i;
@@ -152,12 +152,12 @@ static void indMeas_accumulate_sample(ind_meas_t *im, float end_current) {
         return;
     }
 
-    float pulse_time = im->cfg->ts * (float)im->cfg->pulse_ticks;
+    float pulse_time   = im->cfg->ts * (float)im->cfg->pulse_ticks;
     float axis_voltage = (float)im->polarity * im->cfg->voltage;
-    float avg_current = 0.5f * (im->start_current + end_current);
+    float avg_current  = 0.5f * (im->start_current + end_current);
     /* 用脉冲期间的平均电流估计电阻压降，得到驱动电感变化的有效电压。 */
     float effective_voltage = axis_voltage - im->cfg->phase_resistance * avg_current;
-    float l_sample = (effective_voltage * pulse_time / delta_i) * im->cfg->result_scale;
+    float l_sample          = (effective_voltage * pulse_time / delta_i) * im->cfg->result_scale;
 
     if (isfinite(l_sample) && (l_sample > 0.0f)) {
         im->last_l_sample = l_sample;
@@ -235,9 +235,9 @@ void indMeas_update(ind_meas_t *im, float id_fb, float iq_fb) {
             indMeas_set_zero_voltage(im);
             im->tick_counter++;
             if (im->tick_counter >= im->cfg->rest_ticks) {
-                im->tick_counter = 0U;
+                im->tick_counter  = 0U;
                 im->start_current = axis_current;
-                im->state = IND_MEAS_PULSE;
+                im->state         = IND_MEAS_PULSE;
                 indMeas_set_pulse_voltage(im);
             }
             break;

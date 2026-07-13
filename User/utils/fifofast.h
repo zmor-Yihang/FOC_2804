@@ -260,7 +260,7 @@ static inline void       *fff_data_p(fff_proto_t *fifo, fff_index_t idx) __attri
 // _id:		C conform identifier
 #define _fff_reset(_id)                                                                                                                                                                                \
     do {                                                                                                                                                                                               \
-        _id.read = 0;                                                                                                                                                                                  \
+        _id.read  = 0;                                                                                                                                                                                 \
         _id.write = 0;                                                                                                                                                                                 \
         _id.level = 0;                                                                                                                                                                                 \
     } while (0)
@@ -296,7 +296,7 @@ static inline void       *fff_data_p(fff_proto_t *fifo, fff_index_t idx) __attri
     ({                                                                                                                                                                                                 \
         typeof(_id.data[0]) _return;                                                                                                                                                                   \
         _id.level--;                                                                                                                                                                                   \
-        _return = _id.data[_id.read];                                                                                                                                                                  \
+        _return  = _id.data[_id.read];                                                                                                                                                                 \
         _id.read = _fff_wrap(_id, (_id.read + 1));                                                                                                                                                     \
         _return;                                                                                                                                                                                       \
     })
@@ -319,7 +319,7 @@ static inline void       *fff_data_p(fff_proto_t *fifo, fff_index_t idx) __attri
 #define _fff_write_lite(_id, newdata)                                                                                                                                                                  \
     do {                                                                                                                                                                                               \
         _id.data[_id.write] = (newdata);                                                                                                                                                               \
-        _id.write = _fff_wrap(_id, (_id.write + 1));                                                                                                                                                   \
+        _id.write           = _fff_wrap(_id, (_id.write + 1));                                                                                                                                         \
         _id.level++;                                                                                                                                                                                   \
     } while (0)
 
@@ -364,7 +364,7 @@ static inline void       *fff_data_p(fff_proto_t *fifo, fff_index_t idx) __attri
 #define _fff_add_lite(_id)                                                                                                                                                                             \
     ({                                                                                                                                                                                                 \
         typeof(&_id.data[0]) _return = &_id.data[_id.write];                                                                                                                                           \
-        _id.write = _fff_wrap(_id, (_id.write + 1));                                                                                                                                                   \
+        _id.write                    = _fff_wrap(_id, (_id.write + 1));                                                                                                                                \
         _id.level++;                                                                                                                                                                                   \
         _return;                                                                                                                                                                                       \
     })
@@ -430,7 +430,7 @@ static inline void       *fff_data_p(fff_proto_t *fifo, fff_index_t idx) __attri
             /* reverse section from idx1 to idx2 */                                                                                                                                                    \
             for (; idx1 < idx2; idx1++, idx2--) {                                                                                                                                                      \
                 typeof(_id.data[0]) tmp;                                                                                                                                                               \
-                tmp = _id.data[idx1];                                                                                                                                                                  \
+                tmp            = _id.data[idx1];                                                                                                                                                       \
                 _id.data[idx1] = _id.data[idx2];                                                                                                                                                       \
                 _id.data[idx2] = tmp;                                                                                                                                                                  \
             }                                                                                                                                                                                          \
@@ -438,7 +438,7 @@ static inline void       *fff_data_p(fff_proto_t *fifo, fff_index_t idx) __attri
                                                                                                                                                                                                        \
         /* Update data indices */                                                                                                                                                                      \
         _id.write = _id.write - _id.read;                                                                                                                                                              \
-        _id.read = 0;                                                                                                                                                                                  \
+        _id.read  = 0;                                                                                                                                                                                 \
     } while (0)
 
 //////////////////////////////////////////////////////////////////////////
@@ -477,7 +477,7 @@ static inline fff_index_t fff_mem_free(fff_proto_t *fifo) {
 
 //
 static inline void fff_reset(fff_proto_t *fifo) {
-    fifo->read = 0;
+    fifo->read  = 0;
     fifo->write = 0;
     fifo->level = 0;
 }

@@ -10,15 +10,15 @@
 
 typedef enum { AS5600_TEST_STATE_SETTLE = 0, AS5600_TEST_STATE_SAMPLE, AS5600_TEST_STATE_DONE } as5600_test_state_e;
 
-static as5600_test_state_e as5600_test_state = AS5600_TEST_STATE_SETTLE;
-static uint16_t            as5600_test_step_idx = 0U;
-static uint16_t            as5600_test_sample_idx = 0U;
-static uint32_t            as5600_test_state_tick = 0U;
-static float               as5600_test_sin_sum = 0.0f;
-static float               as5600_test_cos_sum = 0.0f;
-static float               as5600_test_err_min = 1.0e9f;
-static float               as5600_test_err_max = -1.0e9f;
-static float               as5600_test_err_abs_max = 0.0f;
+static as5600_test_state_e as5600_test_state        = AS5600_TEST_STATE_SETTLE;
+static uint16_t            as5600_test_step_idx     = 0U;
+static uint16_t            as5600_test_sample_idx   = 0U;
+static uint32_t            as5600_test_state_tick   = 0U;
+static float               as5600_test_sin_sum      = 0.0f;
+static float               as5600_test_cos_sum      = 0.0f;
+static float               as5600_test_err_min      = 1.0e9f;
+static float               as5600_test_err_max      = -1.0e9f;
+static float               as5600_test_err_abs_max  = 0.0f;
 static float               as5600_test_cmd_mech_rad = 0.0f;
 static float               as5600_test_cmd_elec_rad = 0.0f;
 
@@ -45,14 +45,14 @@ static uint8_t as5600_test_read_raw(uint16_t *raw_count) {
 void as5600_test_init(void) {
     as5600_init();
 
-    as5600_test_state = AS5600_TEST_STATE_SETTLE;
-    as5600_test_step_idx = 0U;
-    as5600_test_sample_idx = 0U;
-    as5600_test_state_tick = HAL_GetTick();
-    as5600_test_sin_sum = 0.0f;
-    as5600_test_cos_sum = 0.0f;
-    as5600_test_err_min = 1.0e9f;
-    as5600_test_err_max = -1.0e9f;
+    as5600_test_state       = AS5600_TEST_STATE_SETTLE;
+    as5600_test_step_idx    = 0U;
+    as5600_test_sample_idx  = 0U;
+    as5600_test_state_tick  = HAL_GetTick();
+    as5600_test_sin_sum     = 0.0f;
+    as5600_test_cos_sum     = 0.0f;
+    as5600_test_err_min     = 1.0e9f;
+    as5600_test_err_max     = -1.0e9f;
     as5600_test_err_abs_max = 0.0f;
 
     as5600_test_apply_step(0U);
@@ -71,9 +71,9 @@ void as5600_test_poll(void) {
     if (as5600_test_state == AS5600_TEST_STATE_SETTLE) {
         if ((HAL_GetTick() - as5600_test_state_tick) >= AS5600_TEST_SETTLE_TIME_MS) {
             as5600_test_sample_idx = 0U;
-            as5600_test_sin_sum = 0.0f;
-            as5600_test_cos_sum = 0.0f;
-            as5600_test_state = AS5600_TEST_STATE_SAMPLE;
+            as5600_test_sin_sum    = 0.0f;
+            as5600_test_cos_sum    = 0.0f;
+            as5600_test_state      = AS5600_TEST_STATE_SAMPLE;
         }
         return;
     }
@@ -83,7 +83,7 @@ void as5600_test_poll(void) {
     }
 
     float meas_mech_rad = (float)raw_count * AS5600_TEST_RAW_TO_RAD;
-    float err_rad = wrap_neg_pi_to_pi(meas_mech_rad - as5600_test_cmd_mech_rad);
+    float err_rad       = wrap_neg_pi_to_pi(meas_mech_rad - as5600_test_cmd_mech_rad);
     float sin_err;
     float cos_err;
 
@@ -133,5 +133,5 @@ void as5600_test_poll(void) {
 
     as5600_test_apply_step(as5600_test_step_idx);
     as5600_test_state_tick = HAL_GetTick();
-    as5600_test_state = AS5600_TEST_STATE_SETTLE;
+    as5600_test_state      = AS5600_TEST_STATE_SETTLE;
 }
