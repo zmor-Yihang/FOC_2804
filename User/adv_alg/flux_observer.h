@@ -29,11 +29,6 @@ typedef struct {
 typedef struct {
     const fluxobserver_cfg_t *cfg;
 
-    float i_alpha; // 实测电流 alpha
-    float i_beta;  // 实测电流 beta
-    float u_alpha; // 电压 alpha
-    float u_beta;  // 电压 beta
-
     float xhat_alpha; // 估算扩展磁链 alpha
     float xhat_beta;  // 估算扩展磁链 beta
 
@@ -51,11 +46,13 @@ void fluxObserver_init(fluxobserver_t *obs, const fluxobserver_cfg_t *cfg);
 /**
  * @brief 运行非线性磁链观测器
  * @param obs 观测器句柄
+ * @param current 当前采样电流
+ * @param applied_voltage 上一采样区间施加的平均电压
  */
-void fluxObserver_estimate(fluxobserver_t *obs);
+void fluxObserver_estimate(fluxobserver_t *obs, alphabeta_t current, alphabeta_t applied_voltage);
 
-float fluxObserver_get_angle(fluxobserver_t *obs);
+float fluxObserver_get_angle(const fluxobserver_t *obs);
 
-float fluxObserver_get_speed(fluxobserver_t *obs);
+float fluxObserver_get_speed(const fluxobserver_t *obs);
 
 #endif

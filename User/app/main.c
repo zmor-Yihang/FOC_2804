@@ -17,8 +17,8 @@ int main(void) {
     // positionClosed_init(0.0f);         // 位置闭环
     // speedWeakClosed_init(1000);        // 弱磁速度闭环
     // fluxObseverClosed_init(500);       // 无感速度闭环(Ortega)
-    mxlemmingObserverClosed_init(500); // 无感速度闭环(MXLEMMING)
-    // improvedFluxObserverClosed_init(500); // 无感速度闭环(改进非线性磁链观测器)
+    // mxlemmingObserverClosed_init(500); // 无感速度闭环(MXLEMMING)
+    improvedFluxObserverClosed_init(100); // 无感速度闭环(改进非线性磁链观测器)
     // resistanceMeasureMode_init();      // 电阻辨识
     // inductanceMeasureMode_init();      // 电感辨识
     // coggingCalibrationMode_init();     // 齿槽转矩标定

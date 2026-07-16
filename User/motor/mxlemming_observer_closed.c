@@ -11,6 +11,9 @@ static pid_controller_t pid_speed;
 // MXLEMMING 观测器
 static mxlemming_obs_t mxlemming_observer;
 
+// 上一采样区间实际施加的 αβ 电压
+static alphabeta_t observer_applied_voltage;
+
 static const mxlemming_cfg_t mxlemming_observer_cfg = {
     .rs                  = MOTOR_RS_Ω,
     .ls                  = 0.5f * (MOTOR_LD_H + MOTOR_LQ_H),
@@ -38,10 +41,8 @@ static void mxlemming_closed_callback(void) {
     currentSense_get_injectedValue(&i_abc);
     alphabeta_t i_alphabeta = clark_transform(i_abc);
 
-    // 更新观测器输入
-    mxlemming_observer.i_alpha = i_alphabeta.alpha;
-    mxlemming_observer.i_beta  = i_alphabeta.beta;
-    mxlemmingObserver_update(&mxlemming_observer);
+    // 使用当前电流和上一采样区间电压更新观测器
+    mxlemmingObserver_update(&mxlemming_observer, i_alphabeta, observer_applied_voltage);
 
     // 编码器反馈（调试对比用）
     float angle_encoder = wrap_neg_pi_to_pi(encoder_get_pllAngle() - foc_mxlemming_handle.angle_offset);
@@ -57,10 +58,8 @@ static void mxlemming_closed_callback(void) {
     // 速度闭环
     loopControl_run_speedLoop(&foc_mxlemming_handle, i_dq, angle_el, speed_feedback, FOC_SPEED_LOOP_DIVIDER);
 
-    // 将输出电压写回观测器供下一拍使用
-    alphabeta_t u_alphabeta    = ipark_transform((dq_t){.d = foc_mxlemming_handle.v_d_out, .q = foc_mxlemming_handle.v_q_out}, angle_el);
-    mxlemming_observer.u_alpha = u_alphabeta.alpha;
-    mxlemming_observer.u_beta  = u_alphabeta.beta;
+    // 保存当前输出，作为下一采样区间的施加电压
+    observer_applied_voltage = ipark_transform((dq_t){.d = foc_mxlemming_handle.v_d_out, .q = foc_mxlemming_handle.v_q_out}, angle_el);
 
     // 保存调试数据
     speed_encoder_temp = speed_encoder;
@@ -83,6 +82,7 @@ void mxlemmingObserverClosed_init(float speed_rpm) {
 
     // zero_alignment(&foc_mxlemming_handle);
     mxlemmingObserver_init(&mxlemming_observer, &mxlemming_observer_cfg);
+    observer_applied_voltage = (alphabeta_t){0};
 
     adc_register_injectedCallback(mxlemming_closed_callback);
 }

@@ -29,12 +29,6 @@ typedef struct {
 typedef struct {
     const mxlemming_cfg_t *cfg;
 
-    // 输入
-    float i_alpha;
-    float i_beta;
-    float u_alpha;
-    float u_beta;
-
     // 上一拍电流（差分用）
     float i_alpha_last;
     float i_beta_last;
@@ -49,8 +43,8 @@ typedef struct {
 } mxlemming_obs_t;
 
 void  mxlemmingObserver_init(mxlemming_obs_t *obs, const mxlemming_cfg_t *cfg);
-void  mxlemmingObserver_update(mxlemming_obs_t *obs);
-float mxlemmingObserver_get_angle(mxlemming_obs_t *obs);
-float mxlemmingObserver_get_speed(mxlemming_obs_t *obs);
+void  mxlemmingObserver_update(mxlemming_obs_t *obs, alphabeta_t current, alphabeta_t applied_voltage);
+float mxlemmingObserver_get_angle(const mxlemming_obs_t *obs);
+float mxlemmingObserver_get_speed(const mxlemming_obs_t *obs);
 
 #endif

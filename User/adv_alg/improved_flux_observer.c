@@ -8,11 +8,6 @@
 void improvedFluxObserver_init(improved_fluxobserver_t *obs, const improved_fluxobserver_cfg_t *cfg) {
     obs->cfg = cfg;
 
-    obs->i_alpha = 0.0f;
-    obs->i_beta  = 0.0f;
-    obs->u_alpha = 0.0f;
-    obs->u_beta  = 0.0f;
-
     obs->xhat_alpha  = cfg->psi_m;
     obs->xhat_beta   = 0.0f;
     obs->psi_r_alpha = cfg->psi_m;
@@ -35,13 +30,13 @@ void improvedFluxObserver_init(improved_fluxobserver_t *obs, const improved_flux
  * @note  ψ̂_s = L_s · i_αβ + ψ_e · [cosθ, sinθ]^T
  *        L_s · i_αβ 是定子电感产生的磁链分量，不能丢，否则 ψ̂_r 初值会偏离磁链圆
  */
-void improvedFluxObserver_set_initial_angle(improved_fluxobserver_t *obs, float theta_e0) {
+void improvedFluxObserver_set_initial_angle(improved_fluxobserver_t *obs, float theta_e0, alphabeta_t current) {
     const improved_fluxobserver_cfg_t *cfg = obs->cfg;
 
     float theta = wrap_neg_pi_to_pi(theta_e0);
 
-    obs->xhat_alpha  = cfg->ls * obs->i_alpha + cfg->psi_m * cosf(theta);
-    obs->xhat_beta   = cfg->ls * obs->i_beta + cfg->psi_m * sinf(theta);
+    obs->xhat_alpha  = cfg->ls * current.alpha + cfg->psi_m * cosf(theta);
+    obs->xhat_beta   = cfg->ls * current.beta + cfg->psi_m * sinf(theta);
     obs->psi_r_alpha = cfg->psi_m * cosf(theta);
     obs->psi_r_beta  = cfg->psi_m * sinf(theta);
     obs->flux_error = 0.0f;
@@ -71,12 +66,12 @@ void improvedFluxObserver_set_initial_angle(improved_fluxobserver_t *obs, float 
  *   - flux_error 收敛到 0 即表示 |ψ̂_r| 锁在磁链圆 ψ_e 上
  *   - ψ̂_r 在状态更新前后各算一次：前者用于构造修正项，后者用于角度提取与诊断
  */
-void improvedFluxObserver_estimate(improved_fluxobserver_t *obs) {
+void improvedFluxObserver_estimate(improved_fluxobserver_t *obs, alphabeta_t current, alphabeta_t applied_voltage) {
     const improved_fluxobserver_cfg_t *cfg = obs->cfg;
 
     // ψ̂_r = ψ̂_s − L_s · i_αβ
-    obs->psi_r_alpha = obs->xhat_alpha - cfg->ls * obs->i_alpha;
-    obs->psi_r_beta  = obs->xhat_beta - cfg->ls * obs->i_beta;
+    obs->psi_r_alpha = obs->xhat_alpha - cfg->ls * current.alpha;
+    obs->psi_r_beta  = obs->xhat_beta - cfg->ls * current.beta;
 
     float psi_r2     = obs->psi_r_alpha * obs->psi_r_alpha + obs->psi_r_beta * obs->psi_r_beta;
     float psi_m2     = cfg->psi_m * cfg->psi_m;
@@ -91,16 +86,16 @@ void improvedFluxObserver_estimate(improved_fluxobserver_t *obs) {
     float search_beta  = obs->psi_r_beta + cfg->phase_gain_k * psi_rj_beta;
 
     // 电压方程开环项 y = u − R_s · i
-    float y_alpha = obs->u_alpha - cfg->rs * obs->i_alpha;
-    float y_beta  = obs->u_beta - cfg->rs * obs->i_beta;
+    float y_alpha = applied_voltage.alpha - cfg->rs * current.alpha;
+    float y_beta  = applied_voltage.beta - cfg->rs * current.beta;
 
     // 前向 Euler 积分 Eq.(15)
     obs->xhat_alpha += cfg->ts * (y_alpha + 0.5f * cfg->observer_gain * search_alpha * flux_error);
     obs->xhat_beta += cfg->ts * (y_beta + 0.5f * cfg->observer_gain * search_beta * flux_error);
 
     // 用更新后的 ψ̂_s 重新计算 ψ̂_r、磁链误差和角度
-    obs->psi_r_alpha = obs->xhat_alpha - cfg->ls * obs->i_alpha;
-    obs->psi_r_beta  = obs->xhat_beta - cfg->ls * obs->i_beta;
+    obs->psi_r_alpha = obs->xhat_alpha - cfg->ls * current.alpha;
+    obs->psi_r_beta  = obs->xhat_beta - cfg->ls * current.beta;
     obs->flux_error  = psi_m2 - (obs->psi_r_alpha * obs->psi_r_alpha + obs->psi_r_beta * obs->psi_r_beta);
     obs->theta_est   = atan2f(obs->psi_r_beta, obs->psi_r_alpha);
 
@@ -111,13 +106,13 @@ void improvedFluxObserver_estimate(improved_fluxobserver_t *obs) {
  * @brief 获取观测电角度
  * @note 返回PLL平滑角度，并保持原接口的[-π, π]范围
  */
-float improvedFluxObserver_get_angle(improved_fluxobserver_t *obs) {
+float improvedFluxObserver_get_angle(const improved_fluxobserver_t *obs) {
     return wrap_neg_pi_to_pi(phasePll_get_phase(&obs->pll));
 }
 
 /**
  * @brief 获取观测机械转速 (rpm)
  */
-float improvedFluxObserver_get_speed(improved_fluxobserver_t *obs) {
+float improvedFluxObserver_get_speed(const improved_fluxobserver_t *obs) {
     return phasePll_get_speed(&obs->pll) * 60.0f / (MATH_TWO_PI * obs->cfg->poles);
 }

@@ -11,6 +11,9 @@ static pid_controller_t pid_speed;
 // 改进非线性磁链观测器
 static improved_fluxobserver_t improved_observer;
 
+// 上一采样区间实际施加的 αβ 电压
+static alphabeta_t observer_applied_voltage;
+
 static const improved_fluxobserver_cfg_t improved_observer_cfg = {
     .rs                  = MOTOR_RS_Ω,
     .ls                  = 0.5f * (MOTOR_LD_H + MOTOR_LQ_H),
@@ -40,10 +43,8 @@ static void improvedFlux_closed_callback(void) {
     currentSense_get_injectedValue(&i_abc);
     alphabeta_t i_alphabeta = clark_transform(i_abc);
 
-    // 更新观测器输入：电流与上一拍输出电压
-    improved_observer.i_alpha = i_alphabeta.alpha;
-    improved_observer.i_beta  = i_alphabeta.beta;
-    improvedFluxObserver_estimate(&improved_observer);
+    // 使用当前电流和上一采样区间电压更新观测器
+    improvedFluxObserver_estimate(&improved_observer, i_alphabeta, observer_applied_voltage);
 
     // 编码器反馈（调试对比用）
     float angle_encoder = wrap_neg_pi_to_pi(encoder_get_pllAngle() - foc_improvedFlux_handle.angle_offset);
@@ -59,10 +60,8 @@ static void improvedFlux_closed_callback(void) {
     // 速度闭环
     loopControl_run_speedLoop(&foc_improvedFlux_handle, i_dq, angle_el, speed_feedback, FOC_SPEED_LOOP_DIVIDER);
 
-    // 将输出电压写回观测器供下一拍使用
-    alphabeta_t u_alphabeta   = ipark_transform((dq_t){.d = foc_improvedFlux_handle.v_d_out, .q = foc_improvedFlux_handle.v_q_out}, angle_el);
-    improved_observer.u_alpha = u_alphabeta.alpha;
-    improved_observer.u_beta  = u_alphabeta.beta;
+    // 保存当前输出，作为下一采样区间的施加电压
+    observer_applied_voltage = ipark_transform((dq_t){.d = foc_improvedFlux_handle.v_d_out, .q = foc_improvedFlux_handle.v_q_out}, angle_el);
 
     // 保存调试数据
     speed_encoder_temp = speed_encoder;
@@ -85,10 +84,7 @@ void improvedFluxObserverClosed_init(float speed_rpm) {
 
     // zero_alignment(&foc_improvedFlux_handle);
     improvedFluxObserver_init(&improved_observer, &improved_observer_cfg);
-
-    // 初始电压置零
-    improved_observer.u_alpha = 0.0f;
-    improved_observer.u_beta  = 0.0f;
+    observer_applied_voltage = (alphabeta_t){0};
 
     adc_register_injectedCallback(improvedFlux_closed_callback);
 }

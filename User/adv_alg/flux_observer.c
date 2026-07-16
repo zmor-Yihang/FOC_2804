@@ -3,7 +3,7 @@
 /**
  * @brief 初始化非线性磁链观测器
  */
-void fluxObserver_init(fluxobserver_t *obs, const fluxobserver_cfg_t *cfg) {
+void fluxObserver_init(fluxobserver_t *obs, fluxobserver_cfg_t *cfg) {
     obs->cfg = cfg;
 
     // 初始化状态量为0
@@ -13,34 +13,28 @@ void fluxObserver_init(fluxobserver_t *obs, const fluxobserver_cfg_t *cfg) {
     obs->theta_est = 0.0f;
 
     // PLL内部使用电角度(rad)和电角速度(rad/s)
-    const phase_pll_config_t pll_config = {
+    phase_pll_config_t pll_config = {
         .kp                = cfg->pll_kp,
         .ki                = cfg->pll_ki,
         .sample_time_s     = cfg->ts,
         .speed_limit_rad_s = cfg->pll_speed_limit_rpm * MATH_TWO_PI * cfg->poles / 60.0f,
     };
     phasePll_init(&obs->pll, &pll_config, 0.0f);
-
-    // 初始化输入为0
-    obs->i_alpha = 0.0f;
-    obs->i_beta  = 0.0f;
-    obs->u_alpha = 0.0f;
-    obs->u_beta  = 0.0f;
 }
 
 /**
  * @brief 运行非线性磁链观测器
  */
-void fluxObserver_estimate(fluxobserver_t *obs) {
-    const fluxobserver_cfg_t *cfg = obs->cfg;
+void fluxObserver_estimate(fluxobserver_t *obs, alphabeta_t current, alphabeta_t applied_voltage) {
+    fluxobserver_cfg_t *cfg = obs->cfg;
 
     // y = -Rs*i + u
-    float y_alpha = -cfg->rs * obs->i_alpha + obs->u_alpha;
-    float y_beta  = -cfg->rs * obs->i_beta + obs->u_beta;
+    float y_alpha = -cfg->rs * current.alpha + applied_voltage.alpha;
+    float y_beta  = -cfg->rs * current.beta + applied_voltage.beta;
 
     // η = xhat - L*i
-    float eta_alpha = obs->xhat_alpha - cfg->ls * obs->i_alpha;
-    float eta_beta  = obs->xhat_beta - cfg->ls * obs->i_beta;
+    float eta_alpha = obs->xhat_alpha - cfg->ls * current.alpha;
+    float eta_beta  = obs->xhat_beta - cfg->ls * current.beta;
 
     // r2 = ||η||^2 = η_alpha^2 + η_beta^2，观测的磁链模长的平方
     float r2 = eta_alpha * eta_alpha + eta_beta * eta_beta;

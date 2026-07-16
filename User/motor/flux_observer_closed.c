@@ -10,6 +10,9 @@ static pid_controller_t pid_speed;
 
 static fluxobserver_t flux_observer; // 观测器句柄
 
+// 上一采样区间实际施加的 αβ 电压
+static alphabeta_t observer_applied_voltage;
+
 // 观测器配置结构体
 static const fluxobserver_cfg_t flux_observer_cfg = {
     .rs                  = MOTOR_RS_Ω,
@@ -42,10 +45,8 @@ static void fluxObserver_closed_callback(void) {
     // Clark 变换
     alphabeta_t i_alphabeta = clark_transform(i_abc);
 
-    // 更新观测器输入：电流与上一控制周期输出电压
-    flux_observer.i_alpha = i_alphabeta.alpha;
-    flux_observer.i_beta  = i_alphabeta.beta;
-    fluxObserver_estimate(&flux_observer);
+    // 使用当前电流和上一采样区间电压更新观测器
+    fluxObserver_estimate(&flux_observer, i_alphabeta, observer_applied_voltage);
 
     // 调试对比：保留编码器反馈
     float angle_encoder = wrap_neg_pi_to_pi(encoder_get_pllAngle() - foc_fluxObserver_handle.angle_offset);
@@ -64,10 +65,8 @@ static void fluxObserver_closed_callback(void) {
     // 速度闭环
     loopControl_run_speedLoop(&foc_fluxObserver_handle, i_dq, angle_el, speed_feedback, FOC_SPEED_LOOP_DIVIDER);
 
-    // 将当前周期输出电压写回观测器，供下一周期估算使用
-    alphabeta_t u_alphabeta = ipark_transform((dq_t){.d = foc_fluxObserver_handle.v_d_out, .q = foc_fluxObserver_handle.v_q_out}, angle_el);
-    flux_observer.u_alpha   = u_alphabeta.alpha;
-    flux_observer.u_beta    = u_alphabeta.beta;
+    // 保存当前输出，作为下一采样区间的施加电压
+    observer_applied_voltage = ipark_transform((dq_t){.d = foc_fluxObserver_handle.v_d_out, .q = foc_fluxObserver_handle.v_q_out}, angle_el);
 
     // 保存调试数据（速度、角度、磁链）
     speed_rpm_temp      = speed_encoder;
@@ -94,12 +93,9 @@ void fluxObseverClosed_init(float speed_rpm) {
     // 零点对齐
     // zero_alignment(&foc_fluxObserver_handle);
 
-    // 初始化磁链观测器
+    // 初始化磁链观测器及上一采样区间电压
     fluxObserver_init(&flux_observer, &flux_observer_cfg);
-
-    // 初始电压置零
-    flux_observer.u_alpha = 0.0f;
-    flux_observer.u_beta  = 0.0f;
+    observer_applied_voltage = (alphabeta_t){0};
 
     // 注册回调函数
     adc_register_injectedCallback(fluxObserver_closed_callback);
