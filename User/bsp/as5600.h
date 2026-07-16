@@ -1,7 +1,7 @@
 #ifndef __AS5600_H__
 #define __AS5600_H__
 
-#include "../bsp/i2c.h"
+#include "i2c.h"
 #include "stm32g4xx_hal.h"
 
 // AS5600寄存器地址定义

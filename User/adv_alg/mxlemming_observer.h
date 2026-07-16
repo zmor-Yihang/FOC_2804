@@ -2,6 +2,7 @@
 #define __MXLEMMING_OBSERVER_H_
 
 #include <math.h>
+#include "../alg/phase_pll.h"
 #include "../app/user_config.h"
 #include "../utils/angle_utils.h"
 #include "../utils/math_utils.h"
@@ -42,12 +43,9 @@ typedef struct {
     float x1;
     float x2;
 
-    // PLL 状态
-    float theta_est;     // atan2 直接输出角度 (rad)
-    float theta_pll;     // PLL 跟踪输出角度 (rad)
-    float speed_rad_s;   // PLL 积分状态 = 估算电角速度 (rad/s)
-    float speed_est;     // 估算机械转速 (rpm)
-    float pll_out_limit; // PLL 输出限幅 (rad/s)
+    // 角度与速度估计
+    float       theta_est; // atan2直接输出角度(rad)
+    phase_pll_t pll;       // 平滑角度与电角速度估计
 } mxlemming_obs_t;
 
 void  mxlemmingObserver_init(mxlemming_obs_t *obs, const mxlemming_cfg_t *cfg);

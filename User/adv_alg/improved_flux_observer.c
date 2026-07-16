@@ -19,13 +19,15 @@ void improvedFluxObserver_init(improved_fluxobserver_t *obs, const improved_flux
     obs->psi_r_beta  = 0.0f;
     obs->flux_error  = 0.0f;
 
-    obs->theta_est   = 0.0f;
-    obs->theta_pll   = 0.0f;
-    obs->speed_rad_s = 0.0f;
-    obs->speed_est   = 0.0f;
+    obs->theta_est = 0.0f;
 
-    // 机械转速限幅(rpm) → 电角速度限幅(rad/s)
-    obs->pll_out_limit = cfg->pll_speed_limit_rpm * MATH_TWO_PI * cfg->poles / 60.0f;
+    const phase_pll_config_t pll_config = {
+        .kp                = cfg->pll_kp,
+        .ki                = cfg->pll_ki,
+        .sample_time_s     = cfg->ts,
+        .speed_limit_rad_s = cfg->pll_speed_limit_rpm * MATH_TWO_PI * cfg->poles / 60.0f,
+    };
+    phasePll_init(&obs->pll, &pll_config, 0.0f);
 }
 
 /**
@@ -42,9 +44,12 @@ void improvedFluxObserver_set_initial_angle(improved_fluxobserver_t *obs, float 
     obs->xhat_beta   = cfg->ls * obs->i_beta + cfg->psi_m * sinf(theta);
     obs->psi_r_alpha = cfg->psi_m * cosf(theta);
     obs->psi_r_beta  = cfg->psi_m * sinf(theta);
-    obs->flux_error  = 0.0f;
-    obs->theta_est   = theta;
-    obs->theta_pll   = theta;
+    obs->flux_error = 0.0f;
+    obs->theta_est  = theta;
+
+    // 只同步PLL相位，保留当前积分速度状态
+    obs->pll.phase_rad       = wrap_0_2pi(theta);
+    obs->pll.phase_error_rad = 0.0f;
 }
 
 /**
@@ -59,7 +64,7 @@ void improvedFluxObserver_set_initial_angle(improved_fluxobserver_t *obs, float 
  *   y         = u_αβ − R_s · i_αβ                      电压方程开环项
  *   ψ̂_s     ← ψ̂_s + Ts · (y + 0.5·λ·search·flux_error) 前向 Euler 积分 Eq.(15)
  *   theta_est ← atan2(ψ̂_rβ, ψ̂_rα)                      Eq.(8)
- *   PLL 跟踪 theta_est，输出 theta_pll 与 speed_rad_s
+ *   PLL 跟踪 theta_est，输出平滑电角度与电角速度
  *
  * 关键点：
  *   - 搜索方向中的 0.5·λ 来自 Eq.(15) 的 λ/2
@@ -99,36 +104,20 @@ void improvedFluxObserver_estimate(improved_fluxobserver_t *obs) {
     obs->flux_error  = psi_m2 - (obs->psi_r_alpha * obs->psi_r_alpha + obs->psi_r_beta * obs->psi_r_beta);
     obs->theta_est   = atan2f(obs->psi_r_beta, obs->psi_r_alpha);
 
-    // PLL 跟踪 theta_est，输出平滑角度 theta_pll 与电角速度 speed_rad_s
-    float e_theta             = wrap_neg_pi_to_pi(obs->theta_est - obs->theta_pll);
-    float speed_integral_step = cfg->pll_ki * e_theta * cfg->ts;
-
-    // 条件抗饱和：达到限幅后只允许反向积分释放
-    if (!((obs->speed_rad_s >= obs->pll_out_limit && speed_integral_step > 0.0f) || (obs->speed_rad_s <= -obs->pll_out_limit && speed_integral_step < 0.0f))) {
-        obs->speed_rad_s += speed_integral_step;
-
-        if (obs->speed_rad_s > obs->pll_out_limit) {
-            obs->speed_rad_s = obs->pll_out_limit;
-        } else if (obs->speed_rad_s < -obs->pll_out_limit) {
-            obs->speed_rad_s = -obs->pll_out_limit;
-        }
-    }
-
-    obs->theta_pll = wrap_neg_pi_to_pi(obs->theta_pll + (obs->speed_rad_s + cfg->pll_kp * e_theta) * cfg->ts);
-    obs->speed_est = obs->speed_rad_s * 60.0f / (MATH_TWO_PI * cfg->poles);
+    phasePll_update(&obs->pll, obs->theta_est);
 }
 
 /**
  * @brief 获取观测电角度
- * @note  返回 PLL 输出 theta_pll，相比 atan2 直接角度更平滑、不会跳变
+ * @note 返回PLL平滑角度，并保持原接口的[-π, π]范围
  */
 float improvedFluxObserver_get_angle(improved_fluxobserver_t *obs) {
-    return obs->theta_pll;
+    return wrap_neg_pi_to_pi(phasePll_get_phase(&obs->pll));
 }
 
 /**
  * @brief 获取观测机械转速 (rpm)
  */
 float improvedFluxObserver_get_speed(improved_fluxobserver_t *obs) {
-    return obs->speed_est;
+    return phasePll_get_speed(&obs->pll) * 60.0f / (MATH_TWO_PI * obs->cfg->poles);
 }

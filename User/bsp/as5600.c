@@ -4,6 +4,7 @@ static uint8_t as5600_i2c_rx_buf[2] = {0};
 
 /**
  * @brief 拼接I2C接收缓冲区得到原始计数 0-4095
+ * @note as5600的原始计数是14位，高8位和低6位拼接在一起
  */
 static inline uint16_t as5600_build_rawCount(const uint8_t *recv_buffer) {
     return ((((uint16_t)recv_buffer[0]) << 8) | recv_buffer[1]) & 0x0FFF;

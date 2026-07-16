@@ -10,9 +10,16 @@ static volatile uint32_t        i2c3_error_count    = 0U;
 static volatile uint32_t        i2c3_timeout_count  = 0U;
 static volatile uint32_t        i2c3_recover_count  = 0U;
 
+/**
+ * @brief 恢复I2C总线
+ * @note 重新初始化I2C3，初始化、模拟滤波、数字滤波
+ *       任意一个失败都返回错误
+ */
 static HAL_StatusTypeDef i2c3_recover_bus(void) {
     i2c3_read_state = I2C_READ_STATE_RECOVERING;
 
+    // 重新初始化I2C3，初始化、模拟滤波、数字滤波
+    // 任意一个失败都返回错误
     HAL_I2C_DeInit(&hi2c3);
     if (HAL_I2C_Init(&hi2c3) != HAL_OK) {
         i2c3_read_state = I2C_READ_STATE_ERROR;
@@ -29,9 +36,10 @@ static HAL_StatusTypeDef i2c3_recover_bus(void) {
         return HAL_ERROR;
     }
 
-    i2c3_recover_count++;
-    i2c3_read_state = I2C_READ_STATE_IDLE;
-    return HAL_OK;
+    // 恢复成功
+    i2c3_recover_count++;                  // 恢复计数加1
+    i2c3_read_state = I2C_READ_STATE_IDLE; // 设置总线状态为空闲
+    return HAL_OK;                         // 返回成功
 }
 
 void i2c_init(void) {
@@ -97,14 +105,13 @@ void i2c_read_bytesAsync(uint16_t dev_addr, uint16_t reg, uint8_t *recv_buffer, 
         }
     }
 
-    // 尝试读取
+    // 总线没有错误、且没有在恢复中、且没有在忙，则尝试读取
     if (HAL_I2C_Mem_Read_IT(&hi2c3, dev_addr, reg, I2C_MEMADD_SIZE_8BIT, recv_buffer, len) == HAL_OK) {
         i2c3_async_start_ms = HAL_GetTick();       // 记录开始时间
         i2c3_read_state     = I2C_READ_STATE_BUSY; // 设置总线状态为忙
-    } else                                         // 读取失败
-    {
-        i2c3_error_count++;                     // 错误计数加1
-        i2c3_read_state = I2C_READ_STATE_ERROR; // 设置总线状态为错误
+    } else {                                       // 读取失败
+        i2c3_error_count++;                        // 错误计数加1，调试时使用
+        i2c3_read_state = I2C_READ_STATE_ERROR;    // 设置总线状态为错误
     }
 }
 
@@ -126,13 +133,6 @@ i2c_readState_e i2c_get_readState(void) {
     }
 
     return i2c3_read_state;
-}
-
-/**
- * @brief 读取总线状态
- */
-void i2c_set_readState(i2c_readState_e current_state) {
-    i2c3_read_state = current_state;
 }
 
 uint32_t i2cDebug_get_errorCount(void) {

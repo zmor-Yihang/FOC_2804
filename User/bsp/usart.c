@@ -7,7 +7,6 @@ _fff_init(fifo_uart_tx);                                // 初始化FIFO
 /* DMA发送临时缓冲区 */
 static uint8_t           tx_dma_buf[TX_DMA_BUF_SIZE];
 static volatile uint8_t  tx_dma_busy       = 0;
-static volatile uint32_t tx_overflow_count = 0; // 溢出计数器
 
 /* 启动DMA发送 */
 static void usart2_start_dma_tx(void) {

@@ -2,6 +2,7 @@
 #define __FLUX_OBSERVER_H_
 
 #include <math.h>
+#include "../alg/phase_pll.h"
 #include "../app/user_config.h"
 #include "../utils/angle_utils.h"
 
@@ -33,19 +34,11 @@ typedef struct {
     float u_alpha; // 电压 alpha
     float u_beta;  // 电压 beta
 
-    float k_pll_kp; // PLL KP
-    float k_pll_ki; // PLL KI
-
     float xhat_alpha; // 估算扩展磁链 alpha
     float xhat_beta;  // 估算扩展磁链 beta
 
-    float theta_est;   // 估算角度 (rad)
-    float z1;          // PLL角度积分状态
-    float z2;          // PLL误差积分状态
-    float speed_rad_s; // 估算电角速度 (rad/s)
-    float speed_est;   // 估算速度 (rpm)
-
-    float pll_out_limit; // PLL输出限幅 (rad/s)
+    float       theta_est; // atan2直接估算角度(rad)
+    phase_pll_t pll;       // 平滑角度与电角速度估计
 } fluxobserver_t;
 
 /**

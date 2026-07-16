@@ -94,16 +94,16 @@ void adc_init(void) {
     ADC_InjectionConfTypeDef injected  = {0};
 
     hadc1.Instance                   = ADC1;
-    hadc1.Init.ClockPrescaler        = ADC_CLOCK_SYNC_PCLK_DIV4; // APB时钟4分频
-    hadc1.Init.Resolution            = ADC_RESOLUTION_12B;       // 12位分辨率
-    hadc1.Init.DataAlign             = ADC_DATAALIGN_RIGHT;      // 右对齐
-    hadc1.Init.GainCompensation      = 0;                        // 无增益补偿
-    hadc1.Init.ScanConvMode          = ADC_SCAN_ENABLE;          // 扫描模式, 多通道依次采样
-    hadc1.Init.EOCSelection          = ADC_EOC_SINGLE_CONV;      // 单次转换结束标志
-    hadc1.Init.LowPowerAutoWait      = DISABLE;
-    hadc1.Init.ContinuousConvMode    = ENABLE; // 连续转换模式
-    hadc1.Init.NbrOfConversion       = 2;      // 规则组通道数: IA + IB
-    hadc1.Init.DiscontinuousConvMode = DISABLE;
+    hadc1.Init.ClockPrescaler        = ADC_CLOCK_SYNC_PCLK_DIV4;      // APB时钟4分频
+    hadc1.Init.Resolution            = ADC_RESOLUTION_12B;            // 12位分辨率
+    hadc1.Init.DataAlign             = ADC_DATAALIGN_RIGHT;           // 右对齐
+    hadc1.Init.GainCompensation      = 0;                             // 无增益补偿
+    hadc1.Init.ScanConvMode          = ADC_SCAN_ENABLE;               // 扫描模式, 多通道依次采样
+    hadc1.Init.EOCSelection          = ADC_EOC_SINGLE_CONV;           // 单次转换结束标志
+    hadc1.Init.LowPowerAutoWait      = DISABLE;                       // 低功耗自动等待失能
+    hadc1.Init.ContinuousConvMode    = ENABLE;                        // 连续转换模式
+    hadc1.Init.NbrOfConversion       = 2;                             // 规则组通道数: IA + IB
+    hadc1.Init.DiscontinuousConvMode = DISABLE;                       // 间断模式失能
     hadc1.Init.ExternalTrigConv      = ADC_SOFTWARE_START;            // 软件触发规则组
     hadc1.Init.ExternalTrigConvEdge  = ADC_EXTERNALTRIGCONVEDGE_NONE; // 规则组无外部触发边沿
     hadc1.Init.DMAContinuousRequests = ENABLE;                        // 持续DMA请求
@@ -128,20 +128,20 @@ void adc_init(void) {
     regular.Rank    = ADC_REGULAR_RANK_2; // 规则组第2个转换
     HAL_ADC_ConfigChannel(&hadc1, &regular);
 
-    // 注入通道1: PA0/IN1 (IA相, TIM2_CC2中心点触发)
-    injected.InjectedChannel               = ADC_CHANNEL_1;
-    injected.InjectedRank                  = ADC_INJECTED_RANK_1;
-    injected.InjectedSamplingTime          = ADC_SAMPLETIME_12CYCLES_5;
-    injected.InjectedSingleDiff            = ADC_SINGLE_ENDED;
-    injected.InjectedOffsetNumber          = ADC_OFFSET_NONE;
-    injected.InjectedOffset                = 0;
-    injected.InjectedNbrOfConversion       = 2; // 注入组2个通道
-    injected.InjectedDiscontinuousConvMode = DISABLE;
-    injected.AutoInjectedConv              = DISABLE; // 不自动注入
-    injected.QueueInjectedContext          = DISABLE;
-    injected.ExternalTrigInjecConv         = ADC_EXTERNALTRIGINJEC_T2_TRGO;         // TIM2捕获比较事件触发
-    injected.ExternalTrigInjecConvEdge     = ADC_EXTERNALTRIGINJECCONV_EDGE_RISING; // 上升沿触发
-    injected.InjecOversamplingMode         = ENABLE;                                // 注入组也启用过采样
+    // 注入序列：由 TIM2 TRGO 更新事件触发，依次采样 IA、IB 两相电流
+    injected.InjectedChannel               = ADC_CHANNEL_1;                         // PA0/ADC1_IN1，IA 相电流
+    injected.InjectedRank                  = ADC_INJECTED_RANK_1;                   // 注入序列第 1 个转换
+    injected.InjectedSamplingTime          = ADC_SAMPLETIME_12CYCLES_5;             // 采样保持时间为 12.5 个 ADC 时钟周期
+    injected.InjectedSingleDiff            = ADC_SINGLE_ENDED;                      // 单端输入
+    injected.InjectedOffsetNumber          = ADC_OFFSET_NONE;                       // 不使用 ADC 硬件偏移补偿
+    injected.InjectedOffset                = 0;                                     // 硬件偏移值为 0
+    injected.InjectedNbrOfConversion       = 2;                                     // 每次触发转换 IA、IB 两个 Rank
+    injected.InjectedDiscontinuousConvMode = DISABLE;                               // 单次触发完成整个注入序列
+    injected.AutoInjectedConv              = DISABLE;                               // 不跟随规则组转换，使用外部触发
+    injected.QueueInjectedContext          = DISABLE;                               // 不启用注入上下文队列
+    injected.ExternalTrigInjecConv         = ADC_EXTERNALTRIGINJEC_T2_TRGO;         // 触发源：TIM2 TRGO（配置为 UPDATE）
+    injected.ExternalTrigInjecConvEdge     = ADC_EXTERNALTRIGINJECCONV_EDGE_RISING; // TRGO 上升沿启动注入转换
+    injected.InjecOversamplingMode         = ENABLE;                                // 启用注入组过采样
     HAL_ADCEx_InjectedConfigChannel(&hadc1, &injected);
 
     // 注入通道2: PA1/IN2 (IB相)
@@ -150,7 +150,7 @@ void adc_init(void) {
     HAL_ADCEx_InjectedConfigChannel(&hadc1, &injected);
 
     // ADC 中断配置 (注入组转换完成中断, 用于FOC电流环回调)
-    HAL_NVIC_SetPriority(ADC1_2_IRQn, 4, 0); // 抢占优先级0, 子优先级0
+    HAL_NVIC_SetPriority(ADC1_2_IRQn, 4, 0); // 抢占优先级4, 子优先级0
     HAL_NVIC_EnableIRQ(ADC1_2_IRQn);         // 使能ADC1/ADC2全局中断
 
     // ADC 内部校准, 消除ADC本身偏移误差
@@ -218,14 +218,16 @@ void ADC1_2_IRQHandler(void) {
  *         采样完成后调用用户注册的回调函数 (FOC 控制循环)
  */
 void HAL_ADCEx_InjectedConvCpltCallback(ADC_HandleTypeDef *hadc) {
-    if (hadc->Instance == ADC1) // 确认是ADC1的中断
-    {
+    if (hadc->Instance == ADC1) {
+        // 计数器递增
         adc_injected_irq_count++;
+
+        // 读取注入组采样值
         adc_injected_buf[0] = HAL_ADCEx_InjectedGetValue(hadc, ADC_INJECTED_RANK_1); // 读取IA相注入通道值
         adc_injected_buf[1] = HAL_ADCEx_InjectedGetValue(hadc, ADC_INJECTED_RANK_2); // 读取IB相注入通道值
 
-        if ((adc_injected_callback != NULL) && ((adc_injected_irq_count % ADC_INJECTED_CALLBACK_PRESCALER) == 0U)) // 按分频系数执行用户回调
-        {
+        // 按分频系数执行用户回调
+        if ((adc_injected_callback != NULL) && ((adc_injected_irq_count % ADC_INJECTED_CALLBACK_PRESCALER) == 0U)) {
             adc_injected_callback_count++;
             adc_injected_callback(); // 执行用户FOC电流环回调函数
         }

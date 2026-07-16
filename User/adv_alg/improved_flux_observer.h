@@ -2,6 +2,7 @@
 #define __IMPROVED_FLUX_OBSERVER_H__
 
 #include <math.h>
+#include "../alg/phase_pll.h"
 #include "../app/user_config.h"
 #include "../utils/angle_utils.h"
 
@@ -36,13 +37,9 @@ typedef struct {
     float psi_r_beta;
     float flux_error; // ψ_e^2 − |ψ̂_r|^2，用于诊断观测器是否收敛到磁链圆
 
-    // 角度与速度输出
-    float theta_est;   // atan2 直接角度 (rad)
-    float theta_pll;   // PLL 输出角度 (rad)
-    float speed_rad_s; // 估算电角速度 (rad/s)
-    float speed_est;   // 估算机械转速 (rpm)
-
-    float pll_out_limit; // PLL 输出限幅 (rad/s)，由 cfg.pll_speed_limit_rpm 换算
+    // 角度与速度估计
+    float       theta_est; // atan2直接角度(rad)
+    phase_pll_t pll;       // 平滑角度与电角速度估计
 } improved_fluxobserver_t;
 
 void  improvedFluxObserver_init(improved_fluxobserver_t *obs, const improved_fluxobserver_cfg_t *cfg);
