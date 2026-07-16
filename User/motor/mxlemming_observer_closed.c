@@ -14,7 +14,7 @@ static mxlemming_obs_t mxlemming_observer;
 // 上一采样区间实际施加的 αβ 电压
 static alphabeta_t observer_applied_voltage;
 
-static const mxlemming_cfg_t mxlemming_observer_cfg = {
+static mxlemming_cfg_t mxlemming_observer_cfg = {
     .rs                  = MOTOR_RS_Ω,
     .ls                  = 0.5f * (MOTOR_LD_H + MOTOR_LQ_H),
     .lambda              = MOTOR_PSI_F,

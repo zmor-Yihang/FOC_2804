@@ -14,7 +14,7 @@ static fluxobserver_t flux_observer; // 观测器句柄
 static alphabeta_t observer_applied_voltage;
 
 // 观测器配置结构体
-static const fluxobserver_cfg_t flux_observer_cfg = {
+static fluxobserver_cfg_t flux_observer_cfg = {
     .rs                  = MOTOR_RS_Ω,
     .ls                  = 0.5f * (MOTOR_LD_H + MOTOR_LQ_H),
     .psi_m               = MOTOR_PSI_F,

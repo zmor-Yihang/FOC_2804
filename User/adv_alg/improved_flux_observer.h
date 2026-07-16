@@ -20,7 +20,7 @@ typedef struct {
 } improved_fluxobserver_cfg_t;
 
 typedef struct {
-    const improved_fluxobserver_cfg_t *cfg;
+    improved_fluxobserver_cfg_t *cfg;
 
     // 估算的定子磁链 ψ̂_s（积分状态）
     float xhat_alpha;
@@ -36,10 +36,10 @@ typedef struct {
     phase_pll_t pll;       // 平滑角度与电角速度估计
 } improved_fluxobserver_t;
 
-void  improvedFluxObserver_init(improved_fluxobserver_t *obs, const improved_fluxobserver_cfg_t *cfg);
+void  improvedFluxObserver_init(improved_fluxobserver_t *obs, improved_fluxobserver_cfg_t *cfg);
 void  improvedFluxObserver_set_initial_angle(improved_fluxobserver_t *obs, float theta_e0, alphabeta_t current);
 void  improvedFluxObserver_estimate(improved_fluxobserver_t *obs, alphabeta_t current, alphabeta_t applied_voltage);
-float improvedFluxObserver_get_angle(const improved_fluxobserver_t *obs);
-float improvedFluxObserver_get_speed(const improved_fluxobserver_t *obs);
+float improvedFluxObserver_get_angle(improved_fluxobserver_t *obs);
+float improvedFluxObserver_get_speed(improved_fluxobserver_t *obs);
 
 #endif /* __IMPROVED_FLUX_OBSERVER_H__ */

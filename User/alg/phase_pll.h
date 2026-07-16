@@ -25,9 +25,9 @@ typedef struct {
     float              phase_error_rad; // 最近一次输入的相位误差[-π, π]
 } phase_pll_t;
 
-void  phasePll_init(phase_pll_t *pll, const phase_pll_config_t *config, float initial_phase_rad);
+void  phasePll_init(phase_pll_t *pll, phase_pll_config_t *config, float initial_phase_rad);
 void  phasePll_update(phase_pll_t *pll, float input_phase_rad);
-float phasePll_get_phase(const phase_pll_t *pll);
-float phasePll_get_speed(const phase_pll_t *pll);
+float phasePll_get_phase(phase_pll_t *pll);
+float phasePll_get_speed(phase_pll_t *pll);
 
 #endif /* __PHASE_PLL_H__ */

@@ -1,6 +1,6 @@
 #include "resistance_measure.h"
 
-void resMeas_init(res_meas_t *rm, const res_meas_cfg_t *cfg) {
+void resMeas_init(res_meas_t *rm, res_meas_cfg_t *cfg) {
     rm->cfg          = cfg;
     rm->state        = RES_MEAS_IDLE;
     rm->current_ref  = 0.0f;
@@ -28,7 +28,7 @@ void resMeas_start(res_meas_t *rm) {
  * @param id_fb  当前拍 d 轴电流反馈 (A)
  */
 void resMeas_update(res_meas_t *rm, float vd_out, float id_fb) {
-    const res_meas_cfg_t *cfg = rm->cfg;
+    res_meas_cfg_t *cfg = rm->cfg;
 
     switch (rm->state) {
         case RES_MEAS_RAMP_UP:
@@ -76,14 +76,14 @@ void resMeas_update(res_meas_t *rm, float vd_out, float id_fb) {
     }
 }
 
-res_meas_state_t resMeas_get_state(const res_meas_t *rm) {
+res_meas_state_t resMeas_get_state(res_meas_t *rm) {
     return rm->state;
 }
 
-float resMeas_get_result(const res_meas_t *rm) {
+float resMeas_get_result(res_meas_t *rm) {
     return rm->resistance;
 }
 
-float resMeas_get_current_ref(const res_meas_t *rm) {
+float resMeas_get_current_ref(res_meas_t *rm) {
     return rm->current_ref;
 }

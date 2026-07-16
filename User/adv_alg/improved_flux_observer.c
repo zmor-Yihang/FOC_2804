@@ -5,7 +5,7 @@
  * @note  ψ̂_s 默认初值取 (ψ_e, 0)，等价于初始角度 0；若已知初始角度，
  *        建议在 init 之后再调用 improvedFluxObserver_set_initial_angle
  */
-void improvedFluxObserver_init(improved_fluxobserver_t *obs, const improved_fluxobserver_cfg_t *cfg) {
+void improvedFluxObserver_init(improved_fluxobserver_t *obs, improved_fluxobserver_cfg_t *cfg) {
     obs->cfg = cfg;
 
     obs->xhat_alpha  = cfg->psi_m;
@@ -16,7 +16,7 @@ void improvedFluxObserver_init(improved_fluxobserver_t *obs, const improved_flux
 
     obs->theta_est = 0.0f;
 
-    const phase_pll_config_t pll_config = {
+    phase_pll_config_t pll_config = {
         .kp                = cfg->pll_kp,
         .ki                = cfg->pll_ki,
         .sample_time_s     = cfg->ts,
@@ -31,7 +31,7 @@ void improvedFluxObserver_init(improved_fluxobserver_t *obs, const improved_flux
  *        L_s · i_αβ 是定子电感产生的磁链分量，不能丢，否则 ψ̂_r 初值会偏离磁链圆
  */
 void improvedFluxObserver_set_initial_angle(improved_fluxobserver_t *obs, float theta_e0, alphabeta_t current) {
-    const improved_fluxobserver_cfg_t *cfg = obs->cfg;
+    improved_fluxobserver_cfg_t *cfg = obs->cfg;
 
     float theta = wrap_neg_pi_to_pi(theta_e0);
 
@@ -67,7 +67,7 @@ void improvedFluxObserver_set_initial_angle(improved_fluxobserver_t *obs, float 
  *   - ψ̂_r 在状态更新前后各算一次：前者用于构造修正项，后者用于角度提取与诊断
  */
 void improvedFluxObserver_estimate(improved_fluxobserver_t *obs, alphabeta_t current, alphabeta_t applied_voltage) {
-    const improved_fluxobserver_cfg_t *cfg = obs->cfg;
+    improved_fluxobserver_cfg_t *cfg = obs->cfg;
 
     // ψ̂_r = ψ̂_s − L_s · i_αβ
     obs->psi_r_alpha = obs->xhat_alpha - cfg->ls * current.alpha;
@@ -106,13 +106,13 @@ void improvedFluxObserver_estimate(improved_fluxobserver_t *obs, alphabeta_t cur
  * @brief 获取观测电角度
  * @note 返回PLL平滑角度，并保持原接口的[-π, π]范围
  */
-float improvedFluxObserver_get_angle(const improved_fluxobserver_t *obs) {
+float improvedFluxObserver_get_angle(improved_fluxobserver_t *obs) {
     return wrap_neg_pi_to_pi(phasePll_get_phase(&obs->pll));
 }
 
 /**
  * @brief 获取观测机械转速 (rpm)
  */
-float improvedFluxObserver_get_speed(const improved_fluxobserver_t *obs) {
+float improvedFluxObserver_get_speed(improved_fluxobserver_t *obs) {
     return phasePll_get_speed(&obs->pll) * 60.0f / (MATH_TWO_PI * obs->cfg->poles);
 }

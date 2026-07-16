@@ -27,7 +27,7 @@ typedef struct {
  * @note 基于磁链圆约束的非线性观测器
  */
 typedef struct {
-    const fluxobserver_cfg_t *cfg;
+    fluxobserver_cfg_t *cfg;
 
     float xhat_alpha; // 估算扩展磁链 alpha
     float xhat_beta;  // 估算扩展磁链 beta
@@ -41,7 +41,7 @@ typedef struct {
  * @param obs 观测器句柄
  * @param cfg 配置参数（需在观测器生命周期内保持有效）
  */
-void fluxObserver_init(fluxobserver_t *obs, const fluxobserver_cfg_t *cfg);
+void fluxObserver_init(fluxobserver_t *obs, fluxobserver_cfg_t *cfg);
 
 /**
  * @brief 运行非线性磁链观测器
@@ -51,8 +51,8 @@ void fluxObserver_init(fluxobserver_t *obs, const fluxobserver_cfg_t *cfg);
  */
 void fluxObserver_estimate(fluxobserver_t *obs, alphabeta_t current, alphabeta_t applied_voltage);
 
-float fluxObserver_get_angle(const fluxobserver_t *obs);
+float fluxObserver_get_angle(fluxobserver_t *obs);
 
-float fluxObserver_get_speed(const fluxobserver_t *obs);
+float fluxObserver_get_speed(fluxobserver_t *obs);
 
 #endif

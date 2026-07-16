@@ -47,13 +47,13 @@ typedef enum smf_state_result (*state_execution)(void *obj);
 /** General state that can be used in multiple state machines. */
 struct smf_state {
     /** Optional method run when this state is entered. */
-    const state_method entry;
+    state_method entry;
 
     /** Optional method run repeatedly during the state machine loop. */
-    const state_execution run;
+    state_execution run;
 
     /** Optional method run when this state is exited. */
-    const state_method exit;
+    state_method exit;
 
     /**
      * Optional parent state providing common entry/run/exit behaviour.
@@ -64,17 +64,17 @@ struct smf_state {
      * Note: when transitioning between two sibling child states that share
      * a parent, that parent's exit and entry actions do not execute.
      */
-    const struct smf_state *parent;
+    struct smf_state *parent;
 };
 
 /** Defines the current context of the state machine. */
 struct smf_ctx {
     /** Current (leaf) state the state machine is executing. */
-    const struct smf_state *current;
+    struct smf_state *current;
     /** Previous state the state machine executed. */
-    const struct smf_state *previous;
+    struct smf_state *previous;
     /** Currently executing state (may be a parent during propagation). */
-    const struct smf_state *executing;
+    struct smf_state *executing;
     /**
      * Set by smf_set_terminate(); a non-zero value returned by
      * smf_run_state() terminates the state machine.
@@ -109,7 +109,7 @@ struct smf_ctx {
  * @param ctx        State machine context
  * @param init_state Initial state the state machine starts in.
  */
-void smf_set_initial(struct smf_ctx *ctx, const struct smf_state *init_state);
+void smf_set_initial(struct smf_ctx *ctx, struct smf_state *init_state);
 
 /**
  * @brief Changes the state machine's state. Handles exiting the previous
@@ -119,7 +119,7 @@ void smf_set_initial(struct smf_ctx *ctx, const struct smf_state *init_state);
  * @param ctx       State machine context
  * @param new_state State to transition to.
  */
-void smf_set_state(struct smf_ctx *ctx, const struct smf_state *new_state);
+void smf_set_state(struct smf_ctx *ctx, struct smf_state *new_state);
 
 /**
  * @brief Terminate the state machine.
@@ -144,7 +144,7 @@ int32_t smf_run_state(struct smf_ctx *ctx);
  * @param ctx State machine context
  * @return    The current leaf state.
  */
-static inline const struct smf_state *smf_get_current_leaf_state(const struct smf_ctx *const ctx) {
+static inline struct smf_state *smf_get_current_leaf_state(struct smf_ctx *ctx) {
     return ctx->current;
 }
 

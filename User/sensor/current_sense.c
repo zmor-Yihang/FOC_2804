@@ -6,7 +6,7 @@
  * @param  offsets  对应通道零偏（单位：V）
  * @param  currents 输出三相电流（单位：A）
  */
-static void currentSense_convert_rawToCurrent(const adc_rawValues_t *raw, const current_sense_offset_t *offsets, abc_t *currents) {
+static void currentSense_convert_rawToCurrent(adc_rawValues_t *raw, current_sense_offset_t *offsets, abc_t *currents) {
     // ADC 原始码值转采样电压：Vout = raw * Vref / resolution
     float vout_a = (float)raw->ia_raw * ADC_VREF / ADC_RESOLUTION; // A 相采样放大器输出电压
     float vout_b = (float)raw->ib_raw * ADC_VREF / ADC_RESOLUTION; // B 相采样放大器输出电压

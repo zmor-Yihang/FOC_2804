@@ -10,7 +10,7 @@ static pid_controller_t pid_iq;
 // 电阻辨识状态机
 static res_meas_t res_meas;
 
-static const res_meas_cfg_t res_meas_cfg = {
+static res_meas_cfg_t res_meas_cfg = {
     .target_current = RES_MEAS_TARGET_CURRENT,
     .ramp_rate      = RES_MEAS_RAMP_RATE,
     .ts             = RES_MEAS_TS_S,

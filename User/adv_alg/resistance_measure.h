@@ -23,7 +23,7 @@ typedef struct {
  * @brief 电阻辨识运行状态
  */
 typedef struct {
-    const res_meas_cfg_t *cfg;
+    res_meas_cfg_t *cfg;
     res_meas_state_t      state;
 
     float    current_ref;  // 当前电流参考值（爬升中）
@@ -38,11 +38,11 @@ typedef struct {
     float resistance; // 辨识结果 (Ω)
 } res_meas_t;
 
-void             resMeas_init(res_meas_t *rm, const res_meas_cfg_t *cfg);
+void             resMeas_init(res_meas_t *rm, res_meas_cfg_t *cfg);
 void             resMeas_start(res_meas_t *rm);
 void             resMeas_update(res_meas_t *rm, float vd_out, float id_fb);
-res_meas_state_t resMeas_get_state(const res_meas_t *rm);
-float            resMeas_get_result(const res_meas_t *rm);
-float            resMeas_get_current_ref(const res_meas_t *rm);
+res_meas_state_t resMeas_get_state(res_meas_t *rm);
+float            resMeas_get_result(res_meas_t *rm);
+float            resMeas_get_current_ref(res_meas_t *rm);
 
 #endif

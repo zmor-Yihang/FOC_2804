@@ -11,7 +11,7 @@
  * 限制后续参与除法和时间计算的配置项，避免产生无意义的辨识结果。
  * rest_ticks 可为 0，用于不插入额外的零电压等待周期。
  */
-static uint8_t indMeas_config_is_valid(const ind_meas_cfg_t *cfg) {
+static uint8_t indMeas_config_is_valid(ind_meas_cfg_t *cfg) {
     return (cfg != 0) && (cfg->voltage > 0.0f) && (cfg->ts > 0.0f) && (cfg->pulse_ticks > 0U) && (cfg->sample_count > 0U) && (cfg->result_scale > 0.0f) && (cfg->min_delta_current >= 0.0f);
 }
 
@@ -67,7 +67,7 @@ static void indMeas_set_pulse_voltage(ind_meas_t *im) {
 }
 
 /* 只使用当前注入轴的电流计算 Δi，避免另一轴的耦合电流混入辨识结果。 */
-static float indMeas_get_axis_current(const ind_meas_t *im, float id_fb, float iq_fb) {
+static float indMeas_get_axis_current(ind_meas_t *im, float id_fb, float iq_fb) {
     return (im->axis == IND_MEAS_AXIS_D) ? id_fb : iq_fb;
 }
 
@@ -179,7 +179,7 @@ static void indMeas_accumulate_sample(ind_meas_t *im, float end_current) {
  * 绑定配置并初始化测量器。
  * 配置无效时立即进入 FAULT；调用方可通过 indMeas_get_fault() 获取原因。
  */
-void indMeas_init(ind_meas_t *im, const ind_meas_cfg_t *cfg) {
+void indMeas_init(ind_meas_t *im, ind_meas_cfg_t *cfg) {
     im->cfg = cfg;
     indMeas_clear(im);
 
@@ -194,7 +194,7 @@ void indMeas_init(ind_meas_t *im, const ind_meas_cfg_t *cfg) {
  * 成功启动后先进入 REST，以零电压稳定电流，再记录脉冲起始电流。
  */
 void indMeas_start(ind_meas_t *im) {
-    const ind_meas_cfg_t *cfg = im->cfg;
+    ind_meas_cfg_t *cfg = im->cfg;
     indMeas_clear(im);
     im->cfg = cfg;
 
@@ -261,50 +261,50 @@ void indMeas_update(ind_meas_t *im, float id_fb, float iq_fb) {
     }
 }
 
-ind_meas_state_t indMeas_get_state(const ind_meas_t *im) {
+ind_meas_state_t indMeas_get_state(ind_meas_t *im) {
     return im->state;
 }
 
-ind_meas_fault_t indMeas_get_fault(const ind_meas_t *im) {
+ind_meas_fault_t indMeas_get_fault(ind_meas_t *im) {
     return im->fault;
 }
 
-ind_meas_axis_t indMeas_get_axis(const ind_meas_t *im) {
+ind_meas_axis_t indMeas_get_axis(ind_meas_t *im) {
     return im->axis;
 }
 
-float indMeas_get_vd_ref(const ind_meas_t *im) {
+float indMeas_get_vd_ref(ind_meas_t *im) {
     return im->v_d_ref;
 }
 
-float indMeas_get_vq_ref(const ind_meas_t *im) {
+float indMeas_get_vq_ref(ind_meas_t *im) {
     return im->v_q_ref;
 }
 
-float indMeas_get_ld(const ind_meas_t *im) {
+float indMeas_get_ld(ind_meas_t *im) {
     return im->ld;
 }
 
-float indMeas_get_lq(const ind_meas_t *im) {
+float indMeas_get_lq(ind_meas_t *im) {
     return im->lq;
 }
 
-float indMeas_get_inductance(const ind_meas_t *im) {
+float indMeas_get_inductance(ind_meas_t *im) {
     return im->inductance;
 }
 
-float indMeas_get_ld_lq_diff(const ind_meas_t *im) {
+float indMeas_get_ld_lq_diff(ind_meas_t *im) {
     return im->ld_lq_diff;
 }
 
-float indMeas_get_current_used(const ind_meas_t *im) {
+float indMeas_get_current_used(ind_meas_t *im) {
     return im->current_used;
 }
 
-float indMeas_get_last_delta_current(const ind_meas_t *im) {
+float indMeas_get_last_delta_current(ind_meas_t *im) {
     return im->last_delta_current;
 }
 
-float indMeas_get_last_l_sample(const ind_meas_t *im) {
+float indMeas_get_last_l_sample(ind_meas_t *im) {
     return im->last_l_sample;
 }

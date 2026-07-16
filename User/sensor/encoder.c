@@ -10,7 +10,7 @@ static float mech_position_multi_turn = 0.0f; // 当前机械多圈位置，用�
 static float mech_angle_prev          = 0.0f; // 上一次机械单圈角度(rad)
 
 // PLL估计状态
-static const phase_pll_config_t encoder_pll_config = {
+static phase_pll_config_t encoder_pll_config = {
     .kp                = ENCODER_PLL_KP,
     .ki                = ENCODER_PLL_KI,
     .sample_time_s     = ENCODER_SPEED_SAMPLE_TIME,

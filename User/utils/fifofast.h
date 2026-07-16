@@ -114,8 +114,8 @@ typedef FIFOFAST_INDEX_T fff_index_t;
 typedef FIFOFAST_LEVEL_T fff_level_t;
 
 typedef struct {
-    const fff_index_t data_size; // bytes per element in data array
-    const fff_index_t mask;      // (max amount of elements in data array) - 1
+    fff_index_t data_size; // bytes per element in data array
+    fff_index_t mask;      // (max amount of elements in data array) - 1
     fff_index_t       read;      // index from which to read next element
     fff_index_t       write;     // index to which to write next element
     fff_level_t       level;     // current amount of stored data. Is larger than 'mask', if full
@@ -197,8 +197,8 @@ static inline void       *fff_data_p(fff_proto_t *fifo, fff_index_t idx) __attri
 
 #define _fff_declare_p(_type, _id, _depth)                                                                                                                                                             \
     struct _FFF_NAME_STRUCT(_id) {                                                                                                                                                                     \
-        const fff_index_t data_size;                                                                                                                                                                   \
-        const fff_index_t mask;                                                                                                                                                                        \
+        fff_index_t data_size;                                                                                                                                                                   \
+        fff_index_t mask;                                                                                                                                                                        \
         fff_index_t       read;                                                                                                                                                                        \
         fff_index_t       write;                                                                                                                                                                       \
         fff_level_t       level;                                                                                                                                                                       \

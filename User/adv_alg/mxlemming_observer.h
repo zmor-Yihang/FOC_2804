@@ -27,7 +27,7 @@ typedef struct {
  * @note x1/x2 直接表示纯永磁磁链 ψ_pm_α / ψ_pm_β
  */
 typedef struct {
-    const mxlemming_cfg_t *cfg;
+    mxlemming_cfg_t *cfg;
 
     // 上一拍电流（差分用）
     float i_alpha_last;
@@ -42,9 +42,9 @@ typedef struct {
     phase_pll_t pll;       // 平滑角度与电角速度估计
 } mxlemming_obs_t;
 
-void  mxlemmingObserver_init(mxlemming_obs_t *obs, const mxlemming_cfg_t *cfg);
+void  mxlemmingObserver_init(mxlemming_obs_t *obs, mxlemming_cfg_t *cfg);
 void  mxlemmingObserver_update(mxlemming_obs_t *obs, alphabeta_t current, alphabeta_t applied_voltage);
-float mxlemmingObserver_get_angle(const mxlemming_obs_t *obs);
-float mxlemmingObserver_get_speed(const mxlemming_obs_t *obs);
+float mxlemmingObserver_get_angle(mxlemming_obs_t *obs);
+float mxlemmingObserver_get_speed(mxlemming_obs_t *obs);
 
 #endif

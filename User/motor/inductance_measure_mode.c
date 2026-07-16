@@ -3,7 +3,7 @@
 static foc_t      foc_ind_meas_handle;
 static ind_meas_t ind_meas;
 
-static const ind_meas_cfg_t ind_meas_cfg = {
+static ind_meas_cfg_t ind_meas_cfg = {
     .voltage           = IND_MEAS_VOLTAGE,
     .phase_resistance  = IND_MEAS_PHASE_RESISTANCE,
     .ts                = IND_MEAS_TS_S,

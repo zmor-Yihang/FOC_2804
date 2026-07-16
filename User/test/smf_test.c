@@ -61,9 +61,9 @@ typedef struct {
 } smf_test_context_t;
 
 static smf_test_context_t     smf_test;
-static const struct smf_state smf_test_states[SMF_TEST_STATE_COUNT];
+static struct smf_state smf_test_states[SMF_TEST_STATE_COUNT];
 
-static const char *smf_test_event_name(smf_test_event_t event) {
+static char *smf_test_event_name(smf_test_event_t event) {
     switch (event) {
         case SMF_TEST_EVENT_PING:
             return "PING";
@@ -91,11 +91,11 @@ static void smf_test_trace_reset(smf_test_context_t *test) {
     test->trace_count = 0U;
 }
 
-static void smf_test_log_action(const char *state, const char *action, smf_test_event_t event) {
+static void smf_test_log_action(char *state, char *action, smf_test_event_t event) {
     printf("[SMF TEST][ACTION] %s.%s event=%s\r\n", state, action, smf_test_event_name(event));
 }
 
-static void smf_test_expect(smf_test_context_t *test, const char *name, bool condition) {
+static void smf_test_expect(smf_test_context_t *test, char *name, bool condition) {
     if (condition) {
         test->pass_count++;
         printf("[SMF TEST][PASS] %s\r\n", name);
@@ -105,7 +105,7 @@ static void smf_test_expect(smf_test_context_t *test, const char *name, bool con
     }
 }
 
-static void smf_test_expect_trace(smf_test_context_t *test, const char *name, const uint8_t *expected, uint8_t expected_count) {
+static void smf_test_expect_trace(smf_test_context_t *test, char *name, uint8_t *expected, uint8_t expected_count) {
     bool matches = (test->trace_count == expected_count);
 
     if (matches) {
@@ -266,7 +266,7 @@ static void smf_test_done_exit(void *obj) {
     smf_test_log_action("done", "exit", test->event);
 }
 
-static const struct smf_state smf_test_states[SMF_TEST_STATE_COUNT] = {
+static struct smf_state smf_test_states[SMF_TEST_STATE_COUNT] = {
     [SMF_TEST_STATE_ROOT]   = SMF_CREATE_STATE(smf_test_root_entry, smf_test_root_run, smf_test_root_exit, NULL),
     [SMF_TEST_STATE_IDLE]   = SMF_CREATE_STATE(smf_test_idle_entry, smf_test_idle_run, smf_test_idle_exit, &smf_test_states[SMF_TEST_STATE_ROOT]),
     [SMF_TEST_STATE_ACTIVE] = SMF_CREATE_STATE(smf_test_active_entry, smf_test_active_run, smf_test_active_exit, &smf_test_states[SMF_TEST_STATE_ROOT]),
@@ -286,7 +286,7 @@ void smf_test_poll(void) {
 
     switch (smf_test.phase) {
         case SMF_TEST_PHASE_INITIAL: {
-            static const uint8_t expected[] = {
+            static uint8_t expected[] = {
                 SMF_TEST_TRACE_ROOT_ENTRY,
                 SMF_TEST_TRACE_IDLE_ENTRY,
             };
@@ -300,7 +300,7 @@ void smf_test_poll(void) {
         }
 
         case SMF_TEST_PHASE_PARENT_PROPAGATION: {
-            static const uint8_t expected[] = {
+            static uint8_t expected[] = {
                 SMF_TEST_TRACE_IDLE_RUN,
                 SMF_TEST_TRACE_ROOT_RUN,
             };
@@ -315,7 +315,7 @@ void smf_test_poll(void) {
         }
 
         case SMF_TEST_PHASE_TO_ACTIVE: {
-            static const uint8_t expected[] = {
+            static uint8_t expected[] = {
                 SMF_TEST_TRACE_IDLE_RUN,
                 SMF_TEST_TRACE_IDLE_EXIT,
                 SMF_TEST_TRACE_ACTIVE_ENTRY,
@@ -333,7 +333,7 @@ void smf_test_poll(void) {
         }
 
         case SMF_TEST_PHASE_SELF_TRANSITION: {
-            static const uint8_t expected[] = {
+            static uint8_t expected[] = {
                 SMF_TEST_TRACE_ACTIVE_RUN,
                 SMF_TEST_TRACE_ACTIVE_EXIT,
                 SMF_TEST_TRACE_ACTIVE_ENTRY,
@@ -349,7 +349,7 @@ void smf_test_poll(void) {
         }
 
         case SMF_TEST_PHASE_TO_DONE: {
-            static const uint8_t expected[] = {
+            static uint8_t expected[] = {
                 SMF_TEST_TRACE_ACTIVE_RUN,
                 SMF_TEST_TRACE_ACTIVE_EXIT,
                 SMF_TEST_TRACE_DONE_ENTRY,
@@ -366,7 +366,7 @@ void smf_test_poll(void) {
         }
 
         case SMF_TEST_PHASE_TERMINATE: {
-            static const uint8_t expected[] = {
+            static uint8_t expected[] = {
                 SMF_TEST_TRACE_DONE_RUN,
             };
             uint32_t done_run_count;

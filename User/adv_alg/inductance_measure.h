@@ -23,7 +23,7 @@ typedef struct {
 } ind_meas_cfg_t;
 
 typedef struct {
-    const ind_meas_cfg_t *cfg;
+    ind_meas_cfg_t *cfg;
 
     ind_meas_state_t state;
     ind_meas_fault_t fault;
@@ -55,21 +55,21 @@ typedef struct {
     float last_l_sample;
 } ind_meas_t;
 
-void indMeas_init(ind_meas_t *im, const ind_meas_cfg_t *cfg);
+void indMeas_init(ind_meas_t *im, ind_meas_cfg_t *cfg);
 void indMeas_start(ind_meas_t *im);
 void indMeas_update(ind_meas_t *im, float id_fb, float iq_fb);
 
-ind_meas_state_t indMeas_get_state(const ind_meas_t *im);
-ind_meas_fault_t indMeas_get_fault(const ind_meas_t *im);
-ind_meas_axis_t  indMeas_get_axis(const ind_meas_t *im);
-float            indMeas_get_vd_ref(const ind_meas_t *im);
-float            indMeas_get_vq_ref(const ind_meas_t *im);
-float            indMeas_get_ld(const ind_meas_t *im);
-float            indMeas_get_lq(const ind_meas_t *im);
-float            indMeas_get_inductance(const ind_meas_t *im);
-float            indMeas_get_ld_lq_diff(const ind_meas_t *im);
-float            indMeas_get_current_used(const ind_meas_t *im);
-float            indMeas_get_last_delta_current(const ind_meas_t *im);
-float            indMeas_get_last_l_sample(const ind_meas_t *im);
+ind_meas_state_t indMeas_get_state(ind_meas_t *im);
+ind_meas_fault_t indMeas_get_fault(ind_meas_t *im);
+ind_meas_axis_t  indMeas_get_axis(ind_meas_t *im);
+float            indMeas_get_vd_ref(ind_meas_t *im);
+float            indMeas_get_vq_ref(ind_meas_t *im);
+float            indMeas_get_ld(ind_meas_t *im);
+float            indMeas_get_lq(ind_meas_t *im);
+float            indMeas_get_inductance(ind_meas_t *im);
+float            indMeas_get_ld_lq_diff(ind_meas_t *im);
+float            indMeas_get_current_used(ind_meas_t *im);
+float            indMeas_get_last_delta_current(ind_meas_t *im);
+float            indMeas_get_last_l_sample(ind_meas_t *im);
 
 #endif /* __INDUCTANCE_MEASURE_H__ */

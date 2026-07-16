@@ -1,6 +1,6 @@
 #include "mxlemming_observer.h"
 
-void mxlemmingObserver_init(mxlemming_obs_t *obs, const mxlemming_cfg_t *cfg) {
+void mxlemmingObserver_init(mxlemming_obs_t *obs, mxlemming_cfg_t *cfg) {
     obs->cfg = cfg;
 
     obs->x1 = 0.0f;
@@ -11,7 +11,7 @@ void mxlemmingObserver_init(mxlemming_obs_t *obs, const mxlemming_cfg_t *cfg) {
 
     obs->theta_est = 0.0f;
 
-    const phase_pll_config_t pll_config = {
+    phase_pll_config_t pll_config = {
         .kp                = cfg->pll_kp,
         .ki                = cfg->pll_ki,
         .sample_time_s     = cfg->ts,
@@ -21,7 +21,7 @@ void mxlemmingObserver_init(mxlemming_obs_t *obs, const mxlemming_cfg_t *cfg) {
 }
 
 void mxlemmingObserver_update(mxlemming_obs_t *obs, alphabeta_t current, alphabeta_t applied_voltage) {
-    const mxlemming_cfg_t *cfg = obs->cfg;
+    mxlemming_cfg_t *cfg = obs->cfg;
     float                  dt  = cfg->ts;
 
     // 电流差分法积分
@@ -47,10 +47,10 @@ void mxlemmingObserver_update(mxlemming_obs_t *obs, alphabeta_t current, alphabe
     phasePll_update(&obs->pll, obs->theta_est);
 }
 
-float mxlemmingObserver_get_angle(const mxlemming_obs_t *obs) {
+float mxlemmingObserver_get_angle(mxlemming_obs_t *obs) {
     return wrap_neg_pi_to_pi(phasePll_get_phase(&obs->pll));
 }
 
-float mxlemmingObserver_get_speed(const mxlemming_obs_t *obs) {
+float mxlemmingObserver_get_speed(mxlemming_obs_t *obs) {
     return phasePll_get_speed(&obs->pll) * 60.0f / (MATH_TWO_PI * obs->cfg->poles);
 }

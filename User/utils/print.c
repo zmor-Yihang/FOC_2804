@@ -1,7 +1,7 @@
 #include "print.h"
 
 /* JustFloat 协议帧尾: 0x00, 0x00, 0x80, 0x7f */
-static const uint8_t justfloat_tail[4] = {0x00, 0x00, 0x80, 0x7f};
+static uint8_t justfloat_tail[4] = {0x00, 0x00, 0x80, 0x7f};
 
 /**
  * @brief 发送 JustFloat 协议数据

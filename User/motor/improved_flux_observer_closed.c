@@ -14,7 +14,7 @@ static improved_fluxobserver_t improved_observer;
 // 上一采样区间实际施加的 αβ 电压
 static alphabeta_t observer_applied_voltage;
 
-static const improved_fluxobserver_cfg_t improved_observer_cfg = {
+static improved_fluxobserver_cfg_t improved_observer_cfg = {
     .rs                  = MOTOR_RS_Ω,
     .ls                  = 0.5f * (MOTOR_LD_H + MOTOR_LQ_H),
     .psi_m               = MOTOR_PSI_F,
