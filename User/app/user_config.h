@@ -21,7 +21,7 @@
 // 控制参数
 #define FOC_CURRENT_LOOP_FREQ_HZ 10000.0f // 电流环执行频率(Hz)
 #define FOC_SPEED_LOOP_DIVIDER   10U      // 速度环相对电流环的分频系数
-#define FOC_DECOUPLING_ENABLE    0        // 1:启用前馈解耦 0:关闭前馈解耦
+#define FOC_DECOUPLING_ENABLE    1        // 1:启用前馈解耦 0:关闭前馈解耦
 #define FOC_ELEC_ANGLE_TRIM_RAD  0.00f    // 电角度手动微调量(rad)，仅在排查固定偏差时临时微调
 
 // 编码器参数

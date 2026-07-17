@@ -11,12 +11,21 @@
  * @param speed_rpm 机械速度反馈 (RPM), 仅在启用前馈解耦时使用
  */
 void loopControl_run_currentLoop(foc_t *handle, dq_t i_dq, float angle_el, float speed_rpm) {
-    float v_d_pi;
-    float v_q_pi;
-    float v_d_ff;
-    float v_q_ff;
-    float v_d_unsat;
-    float v_q_unsat;
+    float v_d_pi;     // d轴电压PI控制器输出
+    float v_q_pi;     // q轴电压PI控制器输出
+    float v_d_ff;     // d轴电压前馈控制器输出
+    float v_q_ff;     // q轴电压前馈控制器输出
+    float v_d_unsat;  // d轴电压未饱和输出
+    float v_q_unsat;  // q轴电压未饱和输出
+    float v_d_out;    // d轴电压限幅后输出
+    float v_q_out;    // q轴电压限幅后输出
+    float v_limit;    // 电压限幅
+    float v_mag_sq;   // 电压幅值平方
+    float v_limit_sq; // 电压限幅平方
+    float backcalc_error_d;
+    float backcalc_error_q;
+    alphabeta_t v_alphabeta;
+    abc_t       duty_cycle;
 
     /* 电流环 PI */
     v_d_pi = pid_calculate(handle->pid_id, handle->target_id, i_dq.d, FOC_CURRENT_LOOP_DT_S);
@@ -37,33 +46,41 @@ void loopControl_run_currentLoop(foc_t *handle, dq_t i_dq, float angle_el, float
 
     v_d_unsat = v_d_pi + v_d_ff;
     v_q_unsat = v_q_pi + v_q_ff;
+    v_d_out   = v_d_unsat;
+    v_q_out   = v_q_unsat;
 
-    handle->v_d_pi  = v_d_pi;
-    handle->v_q_pi  = v_q_pi;
-    handle->v_d_ff  = v_d_ff;
-    handle->v_q_ff  = v_q_ff;
-    handle->v_d_cmd = v_d_unsat;
-    handle->v_q_cmd = v_q_unsat;
-    handle->v_d_out = v_d_unsat;
-    handle->v_q_out = v_q_unsat;
+    // dq 电压矢量联合限幅，参考 VESC 开源代码
+    v_limit    = U_DC * FOC_VOLTAGE_LIMIT_SVPWM_SCALE;
+    v_mag_sq   = v_d_out * v_d_out + v_q_out * v_q_out;
+    v_limit_sq = v_limit * v_limit;
 
-    /* dq 电压矢量联合限幅，参考 VESC 开源代码 */
-    float v_limit    = U_DC * FOC_VOLTAGE_LIMIT_SVPWM_SCALE;
-    float v_mag_sq   = handle->v_d_out * handle->v_d_out + handle->v_q_out * handle->v_q_out;
-    float v_limit_sq = v_limit * v_limit;
-
+    // 电压幅值超过限幅时，按比例缩小
     if (v_mag_sq > v_limit_sq) {
         float scale = v_limit / sqrtf(v_mag_sq);
-        handle->v_d_out *= scale;
-        handle->v_q_out *= scale;
+        v_d_out *= scale;
+        v_q_out *= scale;
     }
 
-    handle->pid_id->backcalc_error = v_d_unsat - handle->v_d_out;
-    handle->pid_iq->backcalc_error = v_q_unsat - handle->v_q_out;
+    // 抗积分饱和需要饱和误差
+    backcalc_error_d = v_d_unsat - v_d_out;
+    backcalc_error_q = v_q_unsat - v_q_out;
 
-    /* 逆 Park 变换后交由输出层完成调制与PWM下发 */
-    alphabeta_t v_alphabeta = ipark_transform((dq_t){.d = handle->v_d_out, .q = handle->v_q_out}, angle_el);
-    handle->duty_cycle      = gateDrive_set_voltage(v_alphabeta);
+    // 逆 Park 变换后交由输出层完成调制与PWM下发
+    v_alphabeta = ipark_transform((dq_t){.d = v_d_out, .q = v_q_out}, angle_el);
+    duty_cycle  = gateDrive_set_voltage(v_alphabeta);
+
+    // 将临时变量拷贝到FOC句柄，方便调试
+    handle->v_d_pi                 = v_d_pi;
+    handle->v_q_pi                 = v_q_pi;
+    handle->v_d_ff                 = v_d_ff;
+    handle->v_q_ff                 = v_q_ff;
+    handle->v_d_cmd                = v_d_unsat;
+    handle->v_q_cmd                = v_q_unsat;
+    handle->v_d_out                = v_d_out;
+    handle->v_q_out                = v_q_out;
+    handle->pid_id->backcalc_error = backcalc_error_d;
+    handle->pid_iq->backcalc_error = backcalc_error_q;
+    handle->duty_cycle             = duty_cycle;
 }
 
 /**

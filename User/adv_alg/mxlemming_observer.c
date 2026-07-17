@@ -22,7 +22,7 @@ void mxlemmingObserver_init(mxlemming_obs_t *obs, mxlemming_cfg_t *cfg) {
 
 void mxlemmingObserver_update(mxlemming_obs_t *obs, alphabeta_t current, alphabeta_t applied_voltage) {
     mxlemming_cfg_t *cfg = obs->cfg;
-    float                  dt  = cfg->ts;
+    float            dt  = cfg->ts;
 
     // 电流差分法积分
     obs->x1 += (applied_voltage.alpha - cfg->rs * current.alpha) * dt - cfg->ls * (current.alpha - obs->i_alpha_last);
