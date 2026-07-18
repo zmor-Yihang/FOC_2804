@@ -11,19 +11,19 @@
  * @param speed_rpm 机械速度反馈 (RPM), 仅在启用前馈解耦时使用
  */
 void loopControl_run_currentLoop(foc_t *handle, dq_t i_dq, float angle_el, float speed_rpm) {
-    float v_d_pi;     // d轴电压PI控制器输出
-    float v_q_pi;     // q轴电压PI控制器输出
-    float v_d_ff;     // d轴电压前馈控制器输出
-    float v_q_ff;     // q轴电压前馈控制器输出
-    float v_d_unsat;  // d轴电压未饱和输出
-    float v_q_unsat;  // q轴电压未饱和输出
-    float v_d_out;    // d轴电压限幅后输出
-    float v_q_out;    // q轴电压限幅后输出
-    float v_limit;    // 电压限幅
-    float v_mag_sq;   // 电压幅值平方
-    float v_limit_sq; // 电压限幅平方
-    float backcalc_error_d;
-    float backcalc_error_q;
+    float       v_d_pi;     // d轴电压PI控制器输出
+    float       v_q_pi;     // q轴电压PI控制器输出
+    float       v_d_ff;     // d轴电压前馈控制器输出
+    float       v_q_ff;     // q轴电压前馈控制器输出
+    float       v_d_unsat;  // d轴电压未饱和输出
+    float       v_q_unsat;  // q轴电压未饱和输出
+    float       v_d_out;    // d轴电压限幅后输出
+    float       v_q_out;    // q轴电压限幅后输出
+    float       v_limit;    // 电压限幅
+    float       v_mag_sq;   // 电压幅值平方
+    float       v_limit_sq; // 电压限幅平方
+    float       backcalc_error_d;
+    float       backcalc_error_q;
     alphabeta_t v_alphabeta;
     abc_t       duty_cycle;
 

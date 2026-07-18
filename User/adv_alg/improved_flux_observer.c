@@ -1,21 +1,17 @@
 #include "improved_flux_observer.h"
 
 /**
- * @brief 初始化观测器
- * @note  ψ̂_s 默认初值取 (ψ_e, 0)，等价于初始角度 0；若已知初始角度，
- *        建议在 init 之后再调用 improvedFluxObserver_set_initial_angle
+ * @brief 初始化改进非线性磁链观测器
  */
 void improvedFluxObserver_init(improved_fluxobserver_t *obs, improved_fluxobserver_cfg_t *cfg) {
     obs->cfg = cfg;
 
-    obs->xhat_alpha  = cfg->psi_m;
-    obs->xhat_beta   = 0.0f;
-    obs->psi_r_alpha = cfg->psi_m;
-    obs->psi_r_beta  = 0.0f;
-    obs->flux_error  = 0.0f;
+    // 初始化状态量，默认转子磁链角度为0
+    obs->xhat_alpha = cfg->psi_m;
+    obs->xhat_beta  = 0.0f;
+    obs->theta_est  = 0.0f;
 
-    obs->theta_est = 0.0f;
-
+    // PLL内部使用电角度(rad)和电角速度(rad/s)
     phase_pll_config_t pll_config = {
         .kp                = cfg->pll_kp,
         .ki                = cfg->pll_ki,
@@ -26,85 +22,48 @@ void improvedFluxObserver_init(improved_fluxobserver_t *obs, improved_fluxobserv
 }
 
 /**
- * @brief 按论文 Eq.(17) 设定初始磁链方向
- * @note  ψ̂_s = L_s · i_αβ + ψ_e · [cosθ, sinθ]^T
- *        L_s · i_αβ 是定子电感产生的磁链分量，不能丢，否则 ψ̂_r 初值会偏离磁链圆
- */
-void improvedFluxObserver_set_initial_angle(improved_fluxobserver_t *obs, float theta_e0, alphabeta_t current) {
-    improved_fluxobserver_cfg_t *cfg = obs->cfg;
-
-    float theta = wrap_neg_pi_to_pi(theta_e0);
-
-    obs->xhat_alpha  = cfg->ls * current.alpha + cfg->psi_m * cosf(theta);
-    obs->xhat_beta   = cfg->ls * current.beta + cfg->psi_m * sinf(theta);
-    obs->psi_r_alpha = cfg->psi_m * cosf(theta);
-    obs->psi_r_beta  = cfg->psi_m * sinf(theta);
-    obs->flux_error = 0.0f;
-    obs->theta_est  = theta;
-
-    // 只同步PLL相位，保留当前积分速度状态
-    obs->pll.phase_rad       = wrap_0_2pi(theta);
-    obs->pll.phase_error_rad = 0.0f;
-}
-
-/**
- * @brief 运行一拍观测器
- *
- * 计算流程：
- *   ψ̂_r        ← ψ̂_s − L_s · i_αβ
- *   |ψ̂_r|^2   = ψ̂_rα^2 + ψ̂_rβ^2
- *   flux_error = ψ_e^2 − |ψ̂_r|^2                       磁链圆误差
- *   ψ̂_rj      = [−ψ̂_rβ, ψ̂_rα]                          转子磁链旋转 +π/2
- *   search    = ψ̂_r + k · ψ̂_rj                         混合搜索方向（幅值 + 相位）
- *   y         = u_αβ − R_s · i_αβ                      电压方程开环项
- *   ψ̂_s     ← ψ̂_s + Ts · (y + 0.5·λ·search·flux_error) 前向 Euler 积分 Eq.(15)
- *   theta_est ← atan2(ψ̂_rβ, ψ̂_rα)                      Eq.(8)
- *   PLL 跟踪 theta_est，输出平滑电角度与电角速度
- *
- * 关键点：
- *   - 搜索方向中的 0.5·λ 来自 Eq.(15) 的 λ/2
- *   - flux_error 收敛到 0 即表示 |ψ̂_r| 锁在磁链圆 ψ_e 上
- *   - ψ̂_r 在状态更新前后各算一次：前者用于构造修正项，后者用于角度提取与诊断
+ * @brief 运行改进非线性磁链观测器
  */
 void improvedFluxObserver_estimate(improved_fluxobserver_t *obs, alphabeta_t current, alphabeta_t applied_voltage) {
     improved_fluxobserver_cfg_t *cfg = obs->cfg;
 
-    // ψ̂_r = ψ̂_s − L_s · i_αβ
-    obs->psi_r_alpha = obs->xhat_alpha - cfg->ls * current.alpha;
-    obs->psi_r_beta  = obs->xhat_beta - cfg->ls * current.beta;
+    // 计算当前拍转子磁链估计：psi_r = psi_s - Ls * i
+    float psi_r_alpha = obs->xhat_alpha - cfg->ls * current.alpha;
+    float psi_r_beta  = obs->xhat_beta - cfg->ls * current.beta;
 
-    float psi_r2     = obs->psi_r_alpha * obs->psi_r_alpha + obs->psi_r_beta * obs->psi_r_beta;
-    float psi_m2     = cfg->psi_m * cfg->psi_m;
-    float flux_error = psi_m2 - psi_r2;
+    // 磁链圆约束误差：psi_m^2 - |psi_r|^2
+    float psi_r2 = psi_r_alpha * psi_r_alpha + psi_r_beta * psi_r_beta;
+    float psi_m2 = cfg->psi_m * cfg->psi_m;
+    float s      = psi_m2 - psi_r2;
 
-    // ψ̂_rj = ψ̂_r · e^{jπ/2}，正交相位搜索方向（Eq.(16)）
-    float psi_rj_alpha = -obs->psi_r_beta;
-    float psi_rj_beta  = obs->psi_r_alpha;
+    // 转子磁链旋转90度，构造正交相位搜索方向
+    float psi_rj_alpha = -psi_r_beta;
+    float psi_rj_beta  = psi_r_alpha;
 
-    // 幅值搜索方向 + 相位搜索方向，Eq.(15) 中的 (ψ̂_r + k·ψ̂_rj)
-    float search_alpha = obs->psi_r_alpha + cfg->phase_gain_k * psi_rj_alpha;
-    float search_beta  = obs->psi_r_beta + cfg->phase_gain_k * psi_rj_beta;
+    // 幅值搜索方向与正交相位搜索方向叠加
+    float search_alpha = psi_r_alpha + cfg->phase_gain_k * psi_rj_alpha;
+    float search_beta  = psi_r_beta + cfg->phase_gain_k * psi_rj_beta;
 
-    // 电压方程开环项 y = u − R_s · i
-    float y_alpha = applied_voltage.alpha - cfg->rs * current.alpha;
-    float y_beta  = applied_voltage.beta - cfg->rs * current.beta;
+    // 按 sqrt(1 + k²) 归一化，保持合成搜索方向的模长量级
+    float normalized_observer_gain = cfg->observer_gain / sqrtf(1.0f + cfg->phase_gain_k * cfg->phase_gain_k);
 
-    // 前向 Euler 积分 Eq.(15)
-    obs->xhat_alpha += cfg->ts * (y_alpha + 0.5f * cfg->observer_gain * search_alpha * flux_error);
-    obs->xhat_beta += cfg->ts * (y_beta + 0.5f * cfg->observer_gain * search_beta * flux_error);
+    // 按前向欧拉计算下一拍定子磁链状态
+    float xhat_alpha_next = obs->xhat_alpha + cfg->ts * (applied_voltage.alpha - cfg->rs * current.alpha + 0.5f * normalized_observer_gain * search_alpha * s);
+    float xhat_beta_next  = obs->xhat_beta + cfg->ts * (applied_voltage.beta - cfg->rs * current.beta + 0.5f * normalized_observer_gain * search_beta * s);
 
-    // 用更新后的 ψ̂_s 重新计算 ψ̂_r、磁链误差和角度
-    obs->psi_r_alpha = obs->xhat_alpha - cfg->ls * current.alpha;
-    obs->psi_r_beta  = obs->xhat_beta - cfg->ls * current.beta;
-    obs->flux_error  = psi_m2 - (obs->psi_r_alpha * obs->psi_r_alpha + obs->psi_r_beta * obs->psi_r_beta);
-    obs->theta_est   = atan2f(obs->psi_r_beta, obs->psi_r_alpha);
+    // 更新下一拍定子磁链状态
+    obs->xhat_alpha = xhat_alpha_next;
+    obs->xhat_beta  = xhat_beta_next;
+
+    // 使用当前拍转子磁链计算角度
+    obs->theta_est = atan2f(psi_r_beta, psi_r_alpha);
 
     phasePll_update(&obs->pll, obs->theta_est);
 }
 
 /**
  * @brief 获取观测电角度
- * @note 返回PLL平滑角度，并保持原接口的[-π, π]范围
+ * @note 返回PLL平滑角度，并保持原接口的[-pi, pi]范围
  */
 float improvedFluxObserver_get_angle(improved_fluxobserver_t *obs) {
     return wrap_neg_pi_to_pi(phasePll_get_phase(&obs->pll));

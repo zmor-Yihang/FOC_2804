@@ -28,31 +28,27 @@ void fluxObserver_init(fluxobserver_t *obs, fluxobserver_cfg_t *cfg) {
 void fluxObserver_estimate(fluxobserver_t *obs, alphabeta_t current, alphabeta_t applied_voltage) {
     fluxobserver_cfg_t *cfg = obs->cfg;
 
-    // y = -Rs*i + u
-    float y_alpha = -cfg->rs * current.alpha + applied_voltage.alpha;
-    float y_beta  = -cfg->rs * current.beta + applied_voltage.beta;
-
+    // 转子磁链
     // η = xhat - L*i
     float eta_alpha = obs->xhat_alpha - cfg->ls * current.alpha;
     float eta_beta  = obs->xhat_beta - cfg->ls * current.beta;
 
+    // 计算观测的磁链模长的平方
     // r2 = ||η||^2 = η_alpha^2 + η_beta^2，观测的磁链模长的平方
-    float r2 = eta_alpha * eta_alpha + eta_beta * eta_beta;
-
     // s = psi_m^2 - r2
     float psi_m2 = cfg->psi_m * cfg->psi_m; // 实际磁链模长的平方
-    float s      = psi_m2 - r2;             // 误差项，s越大表示估计越偏离实际磁链圆
+    float r2     = eta_alpha * eta_alpha + eta_beta * eta_beta;
+    float s      = psi_m2 - r2;
 
-    // dxhat = y + 0.5 * gamma * η * s
-    float dxhat_alpha = y_alpha + 0.5f * cfg->gamma * eta_alpha * s;
-    float dxhat_beta  = y_beta + 0.5f * cfg->gamma * eta_beta * s;
+    // 按前向欧拉计算下一拍定子磁链状态
+    float xhat_alpha_next = obs->xhat_alpha + cfg->ts * (applied_voltage.alpha - cfg->rs * current.alpha + 0.5f * cfg->gamma * eta_alpha * s);
+    float xhat_beta_next  = obs->xhat_beta + cfg->ts * (applied_voltage.beta - cfg->rs * current.beta + 0.5f * cfg->gamma * eta_beta * s);
 
-    // xhat[k+1] = xhat[k] + Ts * dxhat
-    // 更新下一拍的xhat，实际就是积分，会有积分偏移，待改进
-    obs->xhat_alpha += cfg->ts * dxhat_alpha;
-    obs->xhat_beta += cfg->ts * dxhat_beta;
+    // 更新下一拍磁链状态
+    obs->xhat_alpha = xhat_alpha_next;
+    obs->xhat_beta  = xhat_beta_next;
 
-    // 使用 η 作为磁链估算值来计算角度
+    // 估算值来计算角度
     // theta_hat = atan2(η_beta, η_alpha)
     obs->theta_est = atan2f(eta_beta, eta_alpha);
 

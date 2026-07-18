@@ -22,14 +22,9 @@ typedef struct {
 typedef struct {
     improved_fluxobserver_cfg_t *cfg;
 
-    // 估算的定子磁链 ψ̂_s（积分状态）
+    // 估计的定子磁链 ψ̂_s（积分状态）
     float xhat_alpha;
     float xhat_beta;
-
-    // 估算的转子磁链 ψ̂_r 与磁链幅值平方误差
-    float psi_r_alpha;
-    float psi_r_beta;
-    float flux_error; // ψ_e^2 − |ψ̂_r|^2，用于诊断观测器是否收敛到磁链圆
 
     // 角度与速度估计
     float       theta_est; // atan2直接角度(rad)
@@ -37,7 +32,6 @@ typedef struct {
 } improved_fluxobserver_t;
 
 void  improvedFluxObserver_init(improved_fluxobserver_t *obs, improved_fluxobserver_cfg_t *cfg);
-void  improvedFluxObserver_set_initial_angle(improved_fluxobserver_t *obs, float theta_e0, alphabeta_t current);
 void  improvedFluxObserver_estimate(improved_fluxobserver_t *obs, alphabeta_t current, alphabeta_t applied_voltage);
 float improvedFluxObserver_get_angle(improved_fluxobserver_t *obs);
 float improvedFluxObserver_get_speed(improved_fluxobserver_t *obs);
