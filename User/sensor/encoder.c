@@ -105,14 +105,22 @@ void encoder_update(void) {
 
 /**
  * @brief 获取PLL估计的电角度[0, 2π)：rad
+ * @note  已叠加 ω·T_comp 延迟补偿，仅供反 Park 变换使用
  */
 float encoder_get_pllAngle(void) {
 #if (ENCODER_PLL_ANGLE_COMP_ENABLE == 1)
     return angleUtils_compensate_delay(phasePll_get_phase(&encoder_pll), phasePll_get_speed(&encoder_pll), ENCODER_PLL_ANGLE_COMP_DELAY_S);
 #else
-
     return phasePll_get_phase(&encoder_pll);
 #endif /* ENCODER_PLL_ANGLE_COMP_ENABLE */
+}
+
+/**
+ * @brief 获取PLL估计的原始电角度（无延迟补偿）[0, 2π)：rad
+ * @note  对应采样时刻的实际转子角，供 Park 变换使用
+ */
+float encoder_get_rawPllAngle(void) {
+    return phasePll_get_phase(&encoder_pll);
 }
 
 /**

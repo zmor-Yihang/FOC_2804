@@ -107,7 +107,7 @@
 #define FLUX_OBSERVER_PLL_SPEED_LIMIT_RPM 5000.0f                          // 机械转速限幅(rpm)
 
 // 改进非线性磁链观测器参数（论文 Eq.(15)）
-#define IMPROVED_FLUX_OBSERVER_GAIN                2.0e7f                         // 观测器幅值搜索增益 λ
+#define IMPROVED_FLUX_OBSERVER_GAIN                2.0e7f                            // 观测器幅值搜索增益 λ
 #define IMPROVED_FLUX_OBSERVER_PHASE_GAIN_K        1.0f                              // 正交相位搜索增益 k
 #define IMPROVED_FLUX_OBSERVER_CURRENT_PID_KP      5.0f                              // 无感模式电流环PI比例系数
 #define IMPROVED_FLUX_OBSERVER_CURRENT_PID_KI      1860.5f                           // 无感模式电流环PI积分系数

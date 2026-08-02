@@ -31,7 +31,9 @@ static void speed_weak_closed_callback(void) {
     // 更新速度
     encoder_update();
 
-    // 控制使用PLL估计角度；编码器实测角度只用于调试观察
+    // angle_park: 采样时刻原始角，用于 Park 变换
+    // angle_el:   补偿 1.5T_s 后的预测角，用于反 Park 变换
+    float angle_park     = encoder_get_rawPllAngle() - foc_speed_weak_closed_handle.angle_offset;
     float angle_el       = encoder_get_pllAngle() - foc_speed_weak_closed_handle.angle_offset;
     float speed_feedback = encoder_get_pllSpeed();
 
@@ -42,8 +44,8 @@ static void speed_weak_closed_callback(void) {
     // Clark 变换
     alphabeta_t i_alphabeta = clark_transform(i_abc);
 
-    // Park 变换
-    dq_t i_dq = park_transform(i_alphabeta, angle_el);
+    // Park 变换（使用采样时刻原始角）
+    dq_t i_dq = park_transform(i_alphabeta, angle_park);
 
     // 保存电流值用于打印
     id_temp           = i_dq.d;
@@ -52,7 +54,7 @@ static void speed_weak_closed_callback(void) {
     ib_temp           = i_abc.b;
     ic_temp           = i_abc.c;
     speed_rpm_temp    = speed_feedback;
-    pll_angle_el_temp = angle_el;
+    pll_angle_el_temp = angle_park;
 
     // 带弱磁速度闭环
     loopControl_run_speedWeakLoop(&foc_speed_weak_closed_handle, i_dq, angle_el, speed_feedback, FOC_SPEED_LOOP_DIVIDER);
