@@ -31,9 +31,7 @@ static void position_closed_callback(void) {
     // 更新编码器角度、速度和机械多圈位置
     encoder_update();
 
-    // angle_park: 采样时刻原始角，用于 Park 变换
-    // angle_el:   补偿 1.5T_s 后的预测角，用于反 Park 变换
-    float angle_park        = encoder_get_rawPllAngle() - foc_position_closed_handle.angle_offset;
+    // 控制使用PLL估计角度；编码器实测角度只用于调试观察
     float angle_el          = encoder_get_pllAngle() - foc_position_closed_handle.angle_offset;
     float speed_feedback    = encoder_get_pllSpeed();
     float position_feedback = encoder_get_mechanicalPosition();
@@ -45,8 +43,8 @@ static void position_closed_callback(void) {
     // Clark 变换
     alphabeta_t i_alphabeta = clark_transform(i_abc);
 
-    // Park 变换（使用采样时刻原始角）
-    dq_t i_dq = park_transform(i_alphabeta, angle_park);
+    // Park 变换
+    dq_t i_dq = park_transform(i_alphabeta, angle_el);
 
     // 位置闭环：位置PID直接输出iq目标，电流环输出电压
     loopControl_run_positionLoop(&foc_position_closed_handle, i_dq, angle_el, speed_feedback, position_feedback, FOC_POSITION_LOOP_DIVIDER);
@@ -61,7 +59,7 @@ static void position_closed_callback(void) {
     position_rad_temp        = position_feedback;
     target_position_rad_temp = foc_position_closed_handle.target_position;
     position_error_rad_temp  = foc_position_closed_handle.target_position - position_feedback;
-    pll_angle_el_temp        = angle_park;
+    pll_angle_el_temp        = angle_el;
     target_speed_temp        = foc_position_closed_handle.target_speed;
     v_d_pi_temp              = foc_position_closed_handle.v_d_pi;
     v_q_pi_temp              = foc_position_closed_handle.v_q_pi;

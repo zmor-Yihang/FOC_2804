@@ -17,7 +17,6 @@
 void     encoder_init(void);
 void     encoder_update(void);
 float    encoder_get_pllAngle(void);
-float    encoder_get_rawPllAngle(void);  /* 无延迟补偿的原始角，供 Park 变换使用 */
 float    encoder_get_pllSpeed(void);
 float    encoder_get_mechanicalAngle(void);
 float    encoder_get_mechanicalAngleBlock(void);

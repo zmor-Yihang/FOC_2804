@@ -26,10 +26,8 @@ static float v_q_out_temp             = 0.0f;
 static void current_closed_callback(void) {
     encoder_update();
 
-    // angle_park: 采样时刻原始角，用于 Park 变换
-    // angle_el:   补偿 1.5T_s 后的预测角，用于反 Park 变换
-    float angle_park = wrap_0_2pi(encoder_get_rawPllAngle() - foc_current_closed_handle.angle_offset);
-    float angle_el   = wrap_0_2pi(encoder_get_pllAngle() - foc_current_closed_handle.angle_offset);
+    // 控制使用PLL估计角度；原始角度只用于调试观察
+    float angle_el = wrap_0_2pi(encoder_get_pllAngle() - foc_current_closed_handle.angle_offset);
 
     // 获取电流反馈值
     abc_t i_abc;
@@ -39,13 +37,13 @@ static void current_closed_callback(void) {
     // Clark 变换
     alphabeta_t i_alphabeta = clark_transform(i_abc);
 
-    // Park 变换（使用采样时刻原始角）
-    dq_t i_dq = park_transform(i_alphabeta, angle_park);
+    // Park 变换
+    dq_t i_dq = park_transform(i_alphabeta, angle_el);
 
     // 打印用
     i_dq_temp         = i_dq;
     speed_temp        = speed_feedback;
-    pll_angle_el_temp = angle_park;
+    pll_angle_el_temp = angle_el;
 
     // 电流闭环
     loopControl_run_currentLoop(&foc_current_closed_handle, i_dq, angle_el, speed_feedback);

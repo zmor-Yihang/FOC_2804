@@ -34,15 +34,12 @@ static float ld_lq_diff_uH_temp      = 0.0f;
 static void inductance_measure_callback(void) {
     encoder_update();
 
-    // angle_park: 采样时刻原始角，用于 Park 变换
-    // angle_el:   补偿 1.5T_s 后的预测角，用于反 Park 变换
-    float angle_park = wrap_0_2pi(encoder_get_rawPllAngle() - foc_ind_meas_handle.angle_offset);
-    float angle_el   = wrap_0_2pi(encoder_get_pllAngle() - foc_ind_meas_handle.angle_offset);
+    float angle_el = wrap_0_2pi(encoder_get_pllAngle() - foc_ind_meas_handle.angle_offset);
 
     abc_t i_abc;
     currentSense_get_injectedValue(&i_abc);
     alphabeta_t i_alphabeta = clark_transform(i_abc);
-    dq_t        i_dq        = park_transform(i_alphabeta, angle_park); /* 采样时刻原始角 */
+    dq_t        i_dq        = park_transform(i_alphabeta, angle_el);
 
     indMeas_update(&ind_meas, i_dq.d, i_dq.q);
 
