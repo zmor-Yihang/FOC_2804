@@ -23,40 +23,33 @@ static volatile uint32_t adc_injected_irq_count = 0;
 static volatile uint32_t adc_injected_callback_count = 0;
 
 /**
- * @brief  将 ADC 原始值转换为原始电压 (V)
- */
-static inline float adc_raw_to_voltage(uint16_t adc_raw) {
-    return (float)adc_raw * ADC_VREF / ADC_RESOLUTION; // ADC原始值 × 参考电压 / 最大计数值 = 实际电压
-}
-
-/**
  * @brief  零电流偏置标定
  *         在电机驱动未使能、无电流流过分流电阻时调用
- *         使用规则组 DMA 连续采样, 累加平均得到零点偏移
- * @note   标定结果 = 实际ADC电压 - 理论中点(1.65V) 的残余偏移
- *         后续电流计算时会减去该偏移
+ *         使用规则组 DMA 连续采样, 累加平均得到零点码值
+ * @note   结果停留在 ADC 码值域, 不做任何物理量换算:
+ *         采样电路中点、运放与 PCB 残余偏移全部包含在这个码值里,
+ *         BSP 因此不需要知道中点电压是 1.65V 还是别的值, 该语义归采样层。
+ * @note   规则组与注入组各自的过采样都配了对应右移, 两者满量程同为 0..4095,
+ *         所以这里用规则组标定出的码值可以直接给注入组使用。
  */
 static void adc_calibrate_offset(void) {
-    float sum_ia = 0.0f; // A相累加器
-    float sum_ib = 0.0f; // B相累加器
+    float sum_ia = 0.0f; // A相码值累加器
+    float sum_ib = 0.0f; // B相码值累加器
 
     HAL_ADC_Start_DMA(&hadc1, (uint32_t *)adc_regular_buf, 2); // 启动规则组DMA采样
     HAL_Delay(ADC_CALIB_SETTLE_MS);                            // 等待电路稳定
 
     for (uint16_t i = 0; i < ADC_CALIB_SAMPLES; i++) {
-        float vout_a = adc_raw_to_voltage(adc_regular_buf[0]); // 读取A相电压
-        float vout_b = adc_raw_to_voltage(adc_regular_buf[1]); // 读取B相电压
-
-        sum_ia += (vout_a - (ADC_VREF * 0.5f)); // 累加A相对理论中点电压的偏差
-        sum_ib += (vout_b - (ADC_VREF * 0.5f)); // 累加B相对理论中点电压的偏差
+        sum_ia += (float)adc_regular_buf[0]; // 累加A相零电流码值
+        sum_ib += (float)adc_regular_buf[1]; // 累加B相零电流码值
 
         HAL_Delay(ADC_CALIB_DELAY_MS); // 采样间隔
     }
 
     HAL_ADC_Stop_DMA(&hadc1); // 停止DMA采样
 
-    adc_offset.ia_offset = sum_ia / (float)ADC_CALIB_SAMPLES; // A相零点偏移 = 平均值
-    adc_offset.ib_offset = sum_ib / (float)ADC_CALIB_SAMPLES; // B相零点偏移 = 平均值
+    adc_offset.ia_offset_counts = sum_ia / (float)ADC_CALIB_SAMPLES; // A相零点码值 = 平均值
+    adc_offset.ib_offset_counts = sum_ib / (float)ADC_CALIB_SAMPLES; // B相零点码值 = 平均值
 }
 
 /**
@@ -109,6 +102,13 @@ void adc_init(void) {
     hadc1.Init.DMAContinuousRequests = ENABLE;                        // 持续DMA请求
     hadc1.Init.Overrun               = ADC_OVR_DATA_OVERWRITTEN;      // 溢出时覆盖旧数据
     hadc1.Init.OversamplingMode      = ENABLE;                        // 启用过采样提高精度
+
+    // 规则组过采样：比率与右移由 ADC_OVS_LOG2_REGULAR 同源派生，结果仍落在 0..4095
+    hadc1.Init.Oversampling.Ratio         = ADC_OVS_RATIO(ADC_OVS_LOG2_REGULAR); // 累加 16 次
+    hadc1.Init.Oversampling.RightBitShift = ADC_OVS_SHIFT(ADC_OVS_LOG2_REGULAR); // 右移 4 位还原量程
+    hadc1.Init.Oversampling.TriggeredMode = ADC_TRIGGEREDMODE_SINGLE_TRIGGER;    // 单次触发跑完整个过采样序列
+    // 两组同时开过采样时，HAL 会把该字段强制为 RESUMED_MODE，这里直接写实际生效值
+    hadc1.Init.Oversampling.OversamplingStopReset = ADC_REGOVERSAMPLING_RESUMED_MODE; // 注入插队时规则组累加器清零重来
     HAL_ADC_Init(&hadc1);
 
     multimode.Mode = ADC_MODE_INDEPENDENT; // 独立模式, 不使用双ADC
@@ -142,6 +142,10 @@ void adc_init(void) {
     injected.ExternalTrigInjecConv         = ADC_EXTERNALTRIGINJEC_T2_TRGO;         // 触发源：TIM2 TRGO（配置为 UPDATE）
     injected.ExternalTrigInjecConvEdge     = ADC_EXTERNALTRIGINJECCONV_EDGE_RISING; // TRGO 上升沿启动注入转换
     injected.InjecOversamplingMode         = ENABLE;                                // 启用注入组过采样
+
+    // 注入组过采样：4× 累加 + 右移 2，满量程与规则组一致，零偏码值可跨组通用
+    injected.InjecOversampling.Ratio         = ADC_OVS_RATIO(ADC_OVS_LOG2_INJECTED); // 累加 4 次
+    injected.InjecOversampling.RightBitShift = ADC_OVS_SHIFT(ADC_OVS_LOG2_INJECTED); // 右移 2 位还原量程
     HAL_ADCEx_InjectedConfigChannel(&hadc1, &injected);
 
     // 注入通道2: PA1/IN2 (IB相)
@@ -167,8 +171,8 @@ void adc_init(void) {
  * @brief  获取标定得到的零点偏移量
  */
 void adcDebug_get_offset(adc_offset_t *offsets) {
-    offsets->ia_offset = adc_offset.ia_offset; // 输出A相零点偏移
-    offsets->ib_offset = adc_offset.ib_offset; // 输出B相零点偏移
+    offsets->ia_offset_counts = adc_offset.ia_offset_counts; // 输出A相零点码值
+    offsets->ib_offset_counts = adc_offset.ib_offset_counts; // 输出B相零点码值
 }
 
 /**

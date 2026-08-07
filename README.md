@@ -1,6 +1,18 @@
-# FOC_2804 — STM32G431 FOC 电机驱动
+# FOC_2804 — STM32G431 电机驱动学习板
 
-基于 **STM32G431RB** 的 BLDC/PMSM 磁场定向控制工程。
+基于 **STM32G431RB** 的 BLDC/PMSM 磁场定向控制（FOC）工程，配套实验室电机驱动学习板使用，从底层外设驱动到高级控制算法的代码实现。
+
+---
+
+## 硬件平台
+
+| 器件 | 型号 | 用途 |
+|------|------|------|
+| MCU | STM32G431RB（170MHz，Cortex-M4F） | 主控 |
+| 栅极驱动 | MS8313 | 三相全桥驱动 |
+| 电流采样 | INA240 + 采样电阻（10mΩ×50 倍增益） | 双电阻相电流采样 |
+| 位置传感器 | AS5600（12 位磁编，I2C通信，待改进） | 转子机械角 |
+| 电源 | 12V (直接用适配器供电就行) | 电机供电 |
 
 ---
 
@@ -9,33 +21,32 @@
 ```text
 FOC_2804/
 ├── User/
-│   ├── app/        # 程序入口与全局配置
+│   ├── app/        # 程序入口与全局配置（main.c / user_config.h）
 │   ├── bsp/        # ADC、GPIO、TIM、USART、I2C、时钟、AS5600 底层接口
-│   ├── sensor/     # 编码器、电流采样
-│   ├── alg/        # Clarke/Park、PID、SVPWM
+│   ├── sensor/     # 编码器（AS5600 + PLL 测速）、电流采样
+│   ├── alg/        # Clarke/Park 变换、SVPWM、PID、相位 PLL
 │   ├── foc/        # FOC 控制对象、环路调度、零点对齐、栅极驱动
-│   ├── motor/      # 各运行模式封装
+│   ├── motor/      # 各运行模式封装（闭环/辨识/标定）
 │   ├── adv_alg/    # 磁链观测器、弱磁、DOB、齿槽补偿、参数辨识
 │   ├── test/       # 外设与同步测试
-│   └── utils/      # 角度、快速三角函数、打印、FIFO、宏工具
+│   └── utils/      # 角度、快速三角函数、打印、FIFO、状态机、宏工具
 ├── Drivers/        # STM32 HAL、CMSIS、启动文件、系统调用
 ├── docs/           # 调试记录与开发文档
-│   └── videos/     # 不同运行模式的演示视频
+├── 芯片手册/       # 器件数据手册与驱动板用户手册
 ├── .vscode/        # 调试和任务配置
 ├── FOC_2804.code-workspace
 └── STM32G431RBTX_FLASH.ld
 ```
 
----
 
 ## 快速开始
 
 ### 1. 环境准备
 
-- VS Code EIDE 插件
+- VS Code + EIDE 插件
 - Cortex-Debug 插件
 - arm-none-eabi-gcc 工具链
-- OpenOCD 或兼容调试器
+- ST-Link / 兼容调试器（OpenOCD）
 
 ### 2. 编译与烧录
 
@@ -46,7 +57,7 @@ FOC_2804/
 
 ### 3. 切换运行模式
 
-运行模式集中在 `User/app/main.c`。同一时间只保留一个初始化入口和一个调试输出入口。
+运行模式集中在 `User/app/main.c`。同一时间只保留一个初始化入口和一个调试输出入口：
 
 ```c
 // 电流闭环
@@ -54,7 +65,7 @@ currentClosed_init(0.0f, 0.5f);
 currentClosedDebug_print_info();
 
 // 有感速度闭环
-speedClosed_init(2);
+speedClosed_init(200);
 speedClosedDebug_print_info();
 
 // 有感位置闭环
@@ -66,7 +77,7 @@ speedWeakClosed_init(1000);
 speedWeakClosedDebug_print_info();
 
 // Ortega 无感速度闭环
-fluxObseverClosed_init(500);
+fluxObseverClosed_init(3000);
 fluxObseverClosedDebug_print_info();
 
 // MXLEMMING 无感速度闭环
@@ -74,7 +85,7 @@ mxlemmingObserverClosed_init(500);
 mxlemmingObserverClosedDebug_print_info();
 
 // 改进非线性磁链观测器无感速度闭环
-improvedFluxObserverClosed_init(20);
+improvedFluxObserverClosed_init(150);
 improvedFluxObserverClosedDebug_print_info();
 
 // 电阻辨识
@@ -89,6 +100,10 @@ inductanceMeasureModeDebug_print_info();
 coggingCalibrationMode_init();
 coggingCalibrationModeDebug_print_info();
 ```
+
+### 4. 各模块独立测试
+
+`User/test/` 提供外设级测试（ADC 采样、AS5600 编码器、PWM/电流同步、状态机），按需将对应测试文件中的测试入口接入 `main()` 即可。
 
 ---
 
@@ -106,7 +121,7 @@ coggingCalibrationModeDebug_print_info();
 | `MOTOR_LD_H` / `MOTOR_LQ_H` | 0.67 mH | d/q 轴电感 |
 | `MOTOR_PSI_F` | 0.0035 Wb | 永磁体磁链 |
 | `MOTOR_PHASE_SWAP` | 1 | 启用相序翻转 |
-| `FOC_CURRENT_LOOP_FREQ_HZ` | 10000 Hz | 电流环频率 |
+| `FOC_CURRENT_LOOP_FREQ_HZ` | 10000 Hz | 电流环频率（PWM 中心对齐） |
 | `FOC_SPEED_LOOP_DIVIDER` | 10 | 速度环分频 |
 | `FOC_POSITION_LOOP_DIVIDER` | 10 | 位置环分频 |
 
@@ -115,7 +130,7 @@ coggingCalibrationModeDebug_print_info();
 | 参数 | 当前值 | 说明 |
 |------|--------|------|
 | `ENCODER_COUNT_SWAP` | 0 | 编码器计数方向翻转开关 |
-| `ENCODER_PLL_KP` | 1776.0 | 编码器 PLL 比例增益 |
+| `ENCODER_PLL_KP` | 1776.0 | 编码器 PLL 比例增益（约 200Hz 带宽） |
 | `ENCODER_PLL_KI` | 1.58e6 | 编码器 PLL 积分增益 |
 | `ENCODER_PLL_SPEED_LIMIT_RPM` | 5000 rpm | PLL 速度限幅 |
 | `ENCODER_PLL_ANGLE_COMP_ENABLE` | 1 | 启用拍延时补偿 |
@@ -126,16 +141,16 @@ coggingCalibrationModeDebug_print_info();
 
 | 参数 | 当前值 | 说明 |
 |------|--------|------|
-| `CURRENT_PID_KP` / `CURRENT_PID_KI` | 5.0 / 1860.5 | 电流环 PI |
+| `CURRENT_PID_KP` / `CURRENT_PID_KI` | 5.0 / 1860.5 | 电流环 PI（约 1kHz 带宽） |
 | `CURRENT_PID_OUT_MIN` / `MAX` | ±6 V | 电流环输出限幅 |
-| `SPEED_PID_KP` / `SPEED_PID_KI` | 0.004 / 2.5 | 速度环 PI |
+| `SPEED_PID_KP` / `SPEED_PID_KI` | 0.004 / 2.5 | 速度环 PI（约 62.5Hz 带宽） |
 | `SPEED_PID_OUT_MIN` / `MAX` | ±0.8 A | 速度环输出 q 轴电流限幅 |
 | `POSITION_PID_KP` / `KI` / `KD` | 2.5 / 0.15 / 0.04 | 位置环 PID |
 | `POSITION_PID_D_FILTER_ALPHA` | 0.2 | 位置环 D 项滤波 |
 | `POSITION_PID_OUT_MIN` / `MAX` | ±0.8 A | 位置环输出 q 轴电流限幅 |
-| `FOC_DECOUPLING_ENABLE` | 0 | D/Q 轴前馈解耦开关 |
+| `FOC_DECOUPLING_ENABLE` | 1 | D/Q 轴前馈解耦开关 |
 
-### 高级功能
+### 高级算法
 
 | 功能 | 关键参数 | 当前状态 |
 |------|----------|----------|
@@ -143,27 +158,26 @@ coggingCalibrationModeDebug_print_info();
 | 齿槽转矩补偿 | `COGGING_COMP_*` | 默认关闭 |
 | 齿槽离线标定 | `COGGING_CALIB_*` | 默认不编译标定代码 |
 | 电阻辨识 | `RES_MEAS_*` | 独立运行模式 |
-| 电感辨识 | `IND_MEAS_*` | 独立运行模式 |
-| 弱磁控制(有 bug，待完善) | `FLUX_WEAK_*` | 已接入弱磁速度闭环 |
+| 电感辨识 | `IND_MEAS_*` | 独立运行模式（VESC 风格短脉冲/HFI） |
+| 弱磁控制 | `FLUX_WEAK_*` | 已接入弱磁速度闭环（有待完善） |
 
 ---
 
-## 运行效果视频
-### 齿槽效应补偿算法
-齿槽效应（目标转速10rpm）
+## 代码开发规则
 
-https://github.com/user-attachments/assets/db26073c-5752-4def-a1f4-59e05cbd047d
+**分层**：`app → motor → foc → alg/sensor/bsp → utils`，上层调下层，不要反向调用；`alg/` 纯算法， 不要含硬件依赖。
 
-查表法补偿（目标转速10rpm），查表法在极低速工况（<10rpm）效果逐渐变差，此时建议使用DOB法
+**命名**：一模块一 `.c`/`.h`；对外函数带模块前缀（`pid_calculate()`）；`motor/` 统一 `xxxMode_init()` + `xxxModeDebug_print_info()`；内部状态一律 `static`。
 
-https://github.com/user-attachments/assets/0f77154e-731e-496c-a0ff-0f5f48df4405
+**参数**：全部集中在 `user_config.h`，带单位注释；禁止 `.c` 内魔法数字。
 
-DOB法补偿（目标转速2rpm）
-
-https://github.com/user-attachments/assets/4ffed024-4b17-43ef-866f-8e8d5393e274
+**模式**：`main.c` 同一时间只保留一个 `init` + 一个 `Debug_print_info`；禁止在 ADC 注入回调中打印或做耗时操作。
 
 ---
+
 ## 开发计划
 
 - 完善弱磁控制
+- 死区补偿
+- 振动抑制
 - 开发直接转矩控制（DTC）

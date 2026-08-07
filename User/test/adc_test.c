@@ -15,8 +15,8 @@ void adc_test_poll(void) {
     debug_data[0] = phase_current.a;
     debug_data[1] = phase_current.b;
     debug_data[2] = phase_current.c;
-    debug_data[3] = current_offset.ia_offset;
-    debug_data[4] = current_offset.ib_offset;
+    debug_data[3] = current_offset.ia_offset_counts;
+    debug_data[4] = current_offset.ib_offset_counts;
 
     vofa_send(debug_data, 5);
 }
