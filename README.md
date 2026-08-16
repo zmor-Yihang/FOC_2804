@@ -100,11 +100,6 @@ inductanceMeasureModeDebug_print_info();
 coggingCalibrationMode_init();
 coggingCalibrationModeDebug_print_info();
 ```
-
-### 4. 各模块独立测试
-
-`User/test/` 提供外设级测试（ADC 采样、AS5600 编码器、PWM/电流同步、状态机），按需将对应测试文件中的测试入口接入 `main()` 即可。
-
 ---
 
 ## 核心参数

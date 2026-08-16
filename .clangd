@@ -15,3 +15,5 @@ Diagnostics:
   Suppress:
     - unused-includes
     - missing-includes
+InlayHints:
+  Enabled: No

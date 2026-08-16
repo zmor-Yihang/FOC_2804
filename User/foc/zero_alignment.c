@@ -27,7 +27,7 @@ void zero_alignment(foc_t *handle) {
             handle->duty_cycle = gateDrive_set_voltage(ipark_transform(u_dq, angle_cmd));
             HAL_Delay(FOC_ALIGN_SAMPLE_INTERVAL_MS);
 
-            // 阻塞读取AS5600，此处使用的就是实际测量角度，不走PLL预测值
+            // 阻塞读取AS5600，此处使用的就是实际测量角度
             angle_meas = encoder_get_mechanicalAngleBlock();
             angle_meas *= MOTOR_POLE_PAIRS;
             offset_sample = wrap_0_2pi(angle_meas - angle_cmd);
